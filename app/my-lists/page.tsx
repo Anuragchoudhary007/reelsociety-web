@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
+import CreateListModal from "@/components/CreateListModal";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
 
 interface ListData {
@@ -23,7 +23,7 @@ export default function MyLists() {
   const { user } = useAuth();
   const [lists, setLists] = useState<ListData[]>([]);
   const [loading, setLoading] = useState(true);
-
+const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     if (!user) return;
 
@@ -75,6 +75,15 @@ export default function MyLists() {
 
   return (
     <main className="min-h-screen bg-black text-white px-12 py-10">
+      <div className="flex justify-between items-center mb-12">
+  <h1 className="text-4xl font-serif">My Lists</h1>
+  <button
+    onClick={() => setShowModal(true)}
+    className="border border-zinc-700 px-4 py-2 rounded-lg hover:border-white transition"
+  >
+    + New Collection
+  </button>
+</div>
       <h1 className="text-4xl font-serif mb-12">My Lists</h1>
 
       <div className="space-y-16">
@@ -110,6 +119,12 @@ export default function MyLists() {
           </div>
         ))}
       </div>
+      {showModal && (
+  <CreateListModal
+    onClose={() => setShowModal(false)}
+    onCreated={() => window.location.reload()}
+  />
+)}
     </main>
   );
 }
