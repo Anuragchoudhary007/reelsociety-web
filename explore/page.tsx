@@ -1,10 +1,12 @@
+"use client";
+
+import CinematicHome from "@/components/CinematicHome";
+
 export default function ExplorePage() {
   return (
-    <main className="min-h-screen bg-black text-white p-20">
-      <h1 className="text-4xl font-serif">Explore</h1>
-      <p className="text-zinc-400 mt-4">
-        Explore page is under construction.
-      </p>
-    </main>
-  )
+    <div className="min-h-screen bg-black text-white px-16 py-20">
+      <h1 className="text-4xl mb-10">Explore Movies</h1>
+      <CinematicHome />
+    </div>
+  );
 }

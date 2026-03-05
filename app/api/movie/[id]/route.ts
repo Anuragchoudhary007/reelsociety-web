@@ -1,31 +1,33 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params
+  const { id } = await context.params;
 
   try {
     const res = await fetch(
-      `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}`
-    )
+      `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&append_to_response=credits,videos,similar,watch/providers`,
+      {
+        cache: "no-store",
+      }
+    );
 
-    const data = await res.json()
-
-    if (!res.ok || data.status_code) {
+    if (!res.ok) {
       return NextResponse.json(
-        { error: "Movie not found" },
-        { status: 404 }
-      )
+        { error: "Failed to fetch movie" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(data)
+    const data = await res.json();
 
+    return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
-      { error: "Network error" },
+      { error: "Server error" },
       { status: 500 }
-    )
+    );
   }
 }

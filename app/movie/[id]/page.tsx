@@ -1,35 +1,29 @@
-import MovieClient from "./MovieClient"
+import { headers } from "next/headers";
+import MovieDetailsClient from "@/components/MovieDetailsClient";
 
-interface MoviePageProps {
-  params: {
-    id: string
-  }
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const headersList = await headers();
+  const host = headersList.get("host");
+
+  const res = await fetch(
+    `http://${host}/api/movie/${id}`,
+    { cache: "no-store" }
+  );
+
+if (!res.ok) {
+  return (
+    <div className="min-h-screen bg-black text-white p-20">
+      Failed to load movie.
+    </div>
+  );
 }
 
-async function getMovie(id: string) {
-  try {
-    const res = await fetch(`http://localhost:3000/api/movie/${id}`, {
-      cache: "no-store",
-    })
-
-    if (!res.ok) return null
-
-    return await res.json()
-  } catch {
-    return null
-  }
-}
-
-export default async function MoviePage({ params }: MoviePageProps) {
-  const movie = await getMovie(params.id)
-
-  if (!movie) {
-    return (
-      <div className="p-40 text-center text-textSoft">
-        Unable to load movie right now.
-      </div>
-    )
-  }
-
-  return <MovieClient movie={movie} />
+const movie = await res.json();
+  return <MovieDetailsClient movie={movie} />;
 }

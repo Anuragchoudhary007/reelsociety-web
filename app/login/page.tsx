@@ -1,47 +1,76 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/services/firebase";
 import { useRouter } from "next/navigation";
-
-export default function Login() {
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import Link from "next/link";
+export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(true);
 
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
-    } catch (error: any) {
-      alert(error.message);
+      router.push("/");
+    } catch (err: any) {
+      setError("Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-      <h1 className="text-3xl mb-6">Login</h1>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white/5 p-8 rounded-xl border border-white/10">
+        <h1 className="text-2xl mb-6 font-semibold text-center">
+          Login to ReelSociety
+        </h1>
 
-      <input
-        className="p-3 mb-4 bg-zinc-900 rounded"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <div className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full p-3 bg-black border border-white/20 rounded-md focus:outline-none focus:border-red-700 transition"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-      <input
-        type="password"
-        className="p-3 mb-4 bg-zinc-900 rounded"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="w-full p-3 bg-black border border-white/20 rounded-md focus:outline-none focus:border-red-700 transition"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-sm text-gray-400 hover:text-white transition"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
 
-      <button
-        onClick={handleLogin}
-        className="bg-red-600 px-6 py-3 rounded"
-      >
-        Sign In
-      </button>
+          {error && (
+            <p className="text-red-500 text-sm">{error}</p>
+          )}
+<div className="text-center mt-4 text-sm text-gray-400">
+  Don't have an account?{" "}
+  <Link href="/register" className="text-red-500 hover:underline">
+    Register
+  </Link>
+</div>
+          <button
+            onClick={handleLogin}
+            className="w-full bg-red-700 hover:bg-red-600 p-3 rounded-md transition font-medium"
+          >
+            Login
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

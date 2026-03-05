@@ -34,6 +34,14 @@ body {
   90% { transform: translate(10%, 5%); }
   100% { transform: translate(0,0); }
 }
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade {
+  animation: fade 1.2s ease-in-out;
+}
 
 .animate-grain {
   animation: grainMove 8s infinite linear;
