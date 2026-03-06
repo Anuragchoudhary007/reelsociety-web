@@ -11,6 +11,8 @@ import {
 } from "firebase/firestore";
 import Link from "next/link";
 
+const IMAGE = "https://image.tmdb.org/t/p/w500";
+
 export default function UserProfilePage() {
 
   const params = useParams();
@@ -31,21 +33,43 @@ export default function UserProfilePage() {
         setProfile(userSnap.data());
       }
 
-      // fetch public lists
+      /* FETCH LISTS */
+
       const listsRef = collection(db, "users", uid, "lists");
       const listsSnap = await getDocs(listsRef);
 
-      const publicLists = listsSnap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter((l: any) => l.isPublic !== false);
+      const publicLists = await Promise.all(
+        listsSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((l: any) => l.isPublic !== false)
+          .map(async (list: any) => {
+
+            const itemsSnap = await getDocs(
+              collection(db, "users", uid, "lists", list.id, "items")
+            );
+
+            const preview = itemsSnap.docs
+              .slice(0, 1)
+              .map(d => d.data());
+
+            return {
+              ...list,
+              preview,
+              count: itemsSnap.size
+            };
+
+          })
+      );
 
       setLists(publicLists);
 
-      // watchlist stats
+      /* WATCHLIST COUNT */
+
       const watchRef = collection(db, "users", uid, "watchlist");
       const watchSnap = await getDocs(watchRef);
 
       setWatchlistCount(watchSnap.size);
+
     }
 
     loadProfile();
@@ -57,6 +81,7 @@ export default function UserProfilePage() {
   }
 
   return (
+
     <div className="p-10 text-white max-w-4xl">
 
       {/* PROFILE HEADER */}
@@ -69,6 +94,7 @@ export default function UserProfilePage() {
         />
 
         <div>
+
           <h1 className="text-3xl font-bold">
             {profile.username}
           </h1>
@@ -76,6 +102,7 @@ export default function UserProfilePage() {
           <p className="text-gray-400 mt-1">
             {profile.bio || "No bio yet"}
           </p>
+
         </div>
 
       </div>
@@ -118,27 +145,54 @@ export default function UserProfilePage() {
           </p>
         )}
 
-        {lists.map((list:any)=>(
-          <Link
-            key={list.id}
-            href={`/list/${uid}/${list.id}`}
-          >
-            <div className="bg-white/5 border border-white/10 p-4 mb-4 rounded-lg hover:bg-white/10 transition">
+        {lists.map((list: any) => {
 
-              <h3 className="text-lg font-semibold">
-                {list.name}
-              </h3>
+          const poster = list.preview?.[0]?.poster_path;
 
-              <p className="text-gray-400 text-sm">
-                {list.description || "No description"}
-              </p>
+          return (
 
-            </div>
-          </Link>
-        ))}
+            <Link
+              key={list.id}
+             href={`/lists/${list.id}`}
+            >
+
+              <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-4 hover:bg-white/10 transition">
+
+                <div className="w-28 h-40 bg-gray-900">
+
+                  {poster && (
+                    <img
+                      src={`${IMAGE}${poster}`}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                </div>
+
+                <div className="p-4 flex flex-col justify-center">
+
+                  <h3 className="text-lg font-semibold">
+                    {list.name}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm">
+                    {list.count} movies
+                  </p>
+
+                </div>
+
+              </div>
+
+            </Link>
+
+          );
+
+        })}
 
       </div>
 
     </div>
+
   );
+
 }

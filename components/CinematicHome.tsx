@@ -1,105 +1,80 @@
 "use client"
 
-import { useEffect,useState } from "react"
-import MovieRow from "./MovieRow"
-import FriendsActivityRow from "./FriendsActivityRow"
+import HeroBanner from "./HeroBanner"
+import LazyMovieRow from "./LazyMovieRow"
 import RecommendationRow from "./RecommendationRow"
+import FriendsTrending from "./FriendsTrending"
 import DownloadApp from "./DownloadApp"
-export default function CinematicHome(){
+import { useState } from "react"
 
-  const [trending,setTrending] = useState<any[]>([])
-  const [topRated,setTopRated] = useState<any[]>([])
-  const [action,setAction] = useState<any[]>([])
+export default function CinematicHome() {
 
-  const [loading,setLoading] = useState(true)
+  const [recentWatchedMovieId, setRecentWatchedMovieId] = useState<number | null>(null)
 
-  const [recentWatchedMovieId,setRecentWatchedMovieId] =
-    useState<number | null>(null)
+  return (
 
-  useEffect(()=>{
+    <>
 
-    async function load(){
+      <HeroBanner />
 
-      try{
+      <div className="space-y-16 px-10 py-8">
 
-        const trendingData = await fetch("/api/tmdb/trending")
-          .then(r=>r.json())
+        {recentWatchedMovieId && (
+          <RecommendationRow movieId={recentWatchedMovieId} />
+        )}
 
-        const topData = await fetch("/api/tmdb/top")
-          .then(r=>r.json())
+        <LazyMovieRow
+          title="🔥 Trending"
+          endpoint="/api/tmdb/trending"
+        />
 
-        const actionData = await fetch("/api/tmdb/action")
-          .then(r=>r.json())
+        <LazyMovieRow
+          title="⭐ Top Rated"
+          endpoint="/api/tmdb/top"
+        />
 
-        setTrending(trendingData || [])
-        setTopRated(topData || [])
-        setAction(actionData || [])
+        <FriendsTrending />
 
-      }catch(err){
-        console.error(err)
-      }
+        <LazyMovieRow
+          title="🎭 Action"
+          endpoint="/api/tmdb/action"
+        />
 
-      setLoading(false)
+        <LazyMovieRow
+          title="😂 Comedy"
+          endpoint="/api/tmdb/comedy"
+        />
 
-    }
+        <LazyMovieRow
+          title="👻 Horror"
+          endpoint="/api/tmdb/horror"
+        />
 
-    load()
+        <LazyMovieRow
+          title="🚀 Sci-Fi"
+          endpoint="/api/tmdb/scifi"
+        />
 
-  },[])
+        <LazyMovieRow
+          title="🧙 Fantasy"
+          endpoint="/api/tmdb/fantasy"
+        />
 
-  return(
+        <LazyMovieRow
+          title="🧠 Thriller"
+          endpoint="/api/tmdb/thriller"
+        />
 
-    <div className="space-y-16 px-10 py-8">
+        <LazyMovieRow
+          title="🎬 Drama"
+          endpoint="/api/tmdb/drama"
+        />
 
-      {/* Friends watching */}
+        <DownloadApp />
 
-      <FriendsActivityRow/>
+      </div>
 
-      {/* Recommendations */}
-
-      {recentWatchedMovieId &&(
-        <RecommendationRow movieId={recentWatchedMovieId}/>
-      )}
-
-      {/* Trending */}
-
-      <section>
-
-        <h2 className="text-xl font-semibold mb-5">
-          🔥 Trending
-        </h2>
-
-        <MovieRow movies={trending} loading={loading}/>
-
-      </section>
-
-
-      {/* Top Rated */}
-
-      <section>
-
-        <h2 className="text-xl font-semibold mb-5">
-          ⭐ Top Rated
-        </h2>
-
-        <MovieRow movies={topRated} loading={loading}/>
-
-      </section>
-
-
-      {/* Action */}
-
-      <section>
-
-        <h2 className="text-xl font-semibold mb-5">
-          🎭 Action
-        </h2>
-
-        <MovieRow movies={action} loading={loading}/>
-
-      </section>
-<DownloadApp />
-    </div>
+    </>
 
   )
 

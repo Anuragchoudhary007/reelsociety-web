@@ -12,6 +12,9 @@ import {
 
 import { db } from "@/lib/firebase"
 
+
+/* SEND FRIEND REQUEST */
+
 export async function sendFriendRequest(from: string, to: string) {
 
   if (from === to) return
@@ -19,14 +22,13 @@ export async function sendFriendRequest(from: string, to: string) {
   const q = query(
     collection(db, "friendRequests"),
     where("from", "==", from),
-    where("to", "==", to)
+    where("to", "==", to),
+    where("status", "==", "pending")
   )
 
   const existing = await getDocs(q)
 
-  if (!existing.empty) {
-    return
-  }
+  if (!existing.empty) return
 
   await addDoc(collection(db, "friendRequests"), {
     from,
@@ -34,9 +36,31 @@ export async function sendFriendRequest(from: string, to: string) {
     status: "pending",
     createdAt: serverTimestamp()
   })
-} 
 
-//   Accept Friend Request
+}
+
+
+/* GET FRIEND REQUESTS */
+
+export async function getFriendRequests(uid: string) {
+
+  const snapshot = await getDocs(
+    query(
+      collection(db, "friendRequests"),
+      where("to", "==", uid),
+      where("status", "==", "pending")
+    )
+  )
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }))
+
+}
+
+
+/* ACCEPT REQUEST */
 
 export async function acceptFriendRequest(requestId: string, from: string, to: string) {
 
@@ -53,96 +77,74 @@ export async function acceptFriendRequest(requestId: string, from: string, to: s
   })
 
   await deleteDoc(doc(db, "friendRequests", requestId))
+
 }
 
 
-// Reject Request 
+/* REJECT REQUEST */
 
 export async function rejectFriendRequest(requestId: string) {
 
   await deleteDoc(doc(db, "friendRequests", requestId))
+
 }
 
-// Remove Friend 
 
+/* REMOVE FRIEND */
 
 export async function removeFriend(userId: string, friendId: string) {
 
-  const q1 = query(
+  const q = query(
     collection(db, "friends"),
     where("userId", "==", userId),
     where("friendId", "==", friendId)
   )
 
-  const q2 = query(
-    collection(db, "friends"),
-    where("userId", "==", friendId),
-    where("friendId", "==", userId)
-  )
+  const snap = await getDocs(q)
 
-  const snap1 = await getDocs(q1)
-  const snap2 = await getDocs(q2)
+  snap.forEach(d => deleteDoc(d.ref))
 
-  snap1.forEach(d => deleteDoc(d.ref))
-  snap2.forEach(d => deleteDoc(d.ref))
 }
 
 
-// Get Friend List 
+/* GET FRIEND LIST */
 
 export async function getFriends(uid:string){
 
 const snapshot = await getDocs(
-collection(db,"users",uid,"friends")
+query(
+collection(db,"friends"),
+where("userId","==",uid)
+)
 )
 
-const friends = await Promise.all(
+const map = new Map()
 
-snapshot.docs.map(async docSnap=>{
+for(const docSnap of snapshot.docs){
 
 const friendId = docSnap.data().friendId
+
+if(!map.has(friendId)){
 
 const userDoc = await getDoc(
 doc(db,"users",friendId)
 )
 
-return {
+map.set(friendId,{
 friendId,
 ...userDoc.data()
-}
-
 })
 
-)
-
-return friends
+}
 
 }
 
-// Get Friend Requests 
+return Array.from(map.values())
 
-export async function getFriendRequests(uid: string) {
-
-  const snapshot = await getDocs(
-    query(
-      collection(db, "friendRequests"),
-      where("to", "==", uid),
-      where("status", "==", "pending")
-    )
-  );
-
-  const unique = new Map();
-
-  snapshot.docs.forEach((doc) => {
-    const data = doc.data();
-    unique.set(data.from, { id: doc.id, ...data });
-  });
-
-  return Array.from(unique.values());
 }
 
-// User Search
 
+/* SEARCH USERS */
 
 export async function searchUsers(search: string) {
 
@@ -157,4 +159,5 @@ export async function searchUsers(search: string) {
     id: d.id,
     ...d.data()
   }))
+
 }

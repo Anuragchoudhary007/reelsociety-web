@@ -137,8 +137,7 @@ export default function FriendsPage() {
         </h2>
 
         {friends.map((f)=>(
-          <FriendCard key={f.friendId} friend={f} user={user} />
-        ))}
+<FriendCard key={f.friendId + "_friend"} friend={f} user={user} />        ))}
 
       </div>
 

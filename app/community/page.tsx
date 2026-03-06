@@ -26,7 +26,7 @@ export default function CommunityPage() {
     async function fetchActivities() {
 
       const q = query(
-        collection(db, "activity"),
+        collectionGroup(db, "activity"),
         orderBy("createdAt", "desc")
       )
 
@@ -79,7 +79,9 @@ export default function CommunityPage() {
       )
 
       setLeaderboard(
-        users.sort((a, b) => b.watchedCount - a.watchedCount).slice(0, 10)
+        users
+          .sort((a, b) => b.watchedCount - a.watchedCount)
+          .slice(0, 10)
       )
     }
 
@@ -98,9 +100,10 @@ export default function CommunityPage() {
   }
 
   return (
+
     <div className="p-10 flex gap-10">
 
-      {/* Activity Feed */}
+      {/* ACTIVITY FEED */}
 
       <div className="w-2/3">
 
@@ -117,7 +120,7 @@ export default function CommunityPage() {
 
       </div>
 
-      {/* Leaderboard */}
+      {/* LEADERBOARD */}
 
       <div className="w-1/3">
 
@@ -142,11 +145,13 @@ export default function CommunityPage() {
             />
 
             <div>
-              <div>{user.username}</div>
+
+              <div>{user.username || "User"}</div>
 
               <div className="text-sm text-yellow-400">
                 {getBadge(user.watchedCount)}
               </div>
+
             </div>
 
             <div className="ml-auto font-bold">
@@ -160,5 +165,7 @@ export default function CommunityPage() {
       </div>
 
     </div>
+
   )
+
 }

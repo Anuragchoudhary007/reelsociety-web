@@ -26,26 +26,17 @@ export async function getFriendsActivity(){
     ...doc.data()
   }))
 }
+export async function createActivity(uid:string,type:string,movie:any){
 
-export async function createActivity(
-  userId:string,
-  type:string,
-  movie:any,
-  extra?:any
-){
-
-  if(!movie?.id) return
-
-  await addDoc(
-    collection(db,"users",userId,"activity"),
-    {
-      type,
-      movieId:movie.id,
-      movieTitle:movie.title || movie.name || "Unknown",
-      poster:movie.poster_path || null,
-      rating:extra?.rating || null,
-      createdAt:serverTimestamp()
-    }
-  )
+await addDoc(
+collection(db,"users",uid,"activity"),
+{
+type,
+movieId:movie.id,
+movieTitle:movie.title || movie.name,
+poster:movie.poster_path,
+createdAt:serverTimestamp()
+}
+)
 
 }

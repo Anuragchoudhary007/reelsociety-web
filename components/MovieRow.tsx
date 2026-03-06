@@ -2,15 +2,17 @@
 
 import MovieCard from "./MovieCard"
 
-export default function MovieRow({movies,loading}:any){
+export default function MovieRow({ movies, loading }: any) {
 
-  if(loading){
+  const list = Array.isArray(movies) ? movies : []
 
-    return(
+  if (loading) {
+
+    return (
 
       <div className="flex gap-4 overflow-x-auto pb-6">
 
-        {[...Array(10)].map((_,i)=>(
+        {[...Array(10)].map((_, i) => (
           <div
             key={i}
             className="min-w-[160px] h-[240px] bg-gray-800 rounded-lg animate-pulse"
@@ -23,13 +25,13 @@ export default function MovieRow({movies,loading}:any){
 
   }
 
-  if(!movies || movies.length===0) return null
+  if (list.length === 0) return null
 
-  return(
+  return (
 
     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
 
-      {movies.map((movie:any)=>(
+      {list.map((movie: any) => (
 
         <MovieCard
           key={movie.id}
