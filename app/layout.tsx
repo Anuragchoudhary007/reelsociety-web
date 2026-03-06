@@ -2,51 +2,32 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
-import { Playfair_Display, Inter } from "next/font/google";
-import Footer from "@/components/Footer"
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400","600","700"],
-  variable: "--font-display",
-});
-
-const inter = Inter({
-  subsets:["latin"],
-  variable:"--font-body",
-});
 
 export default function RootLayout({
   children,
-}:{
-  children:React.ReactNode;
-}){
-
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="bg-black text-white font-body">
+    <html lang="en">
+      <body className="bg-black text-white">
 
         <AuthProvider>
 
-          <div className="flex min-h-screen">
-
-            {/* Sidebar */}
+          <div className="flex h-screen overflow-hidden">
 
             <Sidebar />
 
-            {/* Content */}
-
-            <div className="flex flex-col flex-1">
+            <div className="flex-1 flex flex-col">
 
               <Navbar />
 
-              <main className="flex-1 p-10">
-                {children}
-              </main>
-<main className="flex-1 p-10">
-  {children}
-</main>
+              <main className="flex-1 overflow-y-auto px-10 py-8 max-w-[1600px] mx-auto w-full">
 
-<Footer />
+                {children}
+
+              </main>
+
             </div>
 
           </div>

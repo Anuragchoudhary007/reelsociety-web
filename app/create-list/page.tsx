@@ -18,17 +18,17 @@ export default function CreateList() {
     if (!user || !name) return;
 
     const listId = nanoid();
-
-    await setDoc(
-      doc(db, "users", user.uid, "lists", listId),
-      {
-        name,
-        owner: user.uid,
-        visibility,
-        createdAt: serverTimestamp(),
-        likesCount: 0,
-      }
-    );
+await setDoc(
+  doc(db,"users",user.uid,"lists",listId),
+  {
+    name,
+    owner:user.uid,
+    visibility,
+    isPublic: visibility === "public",
+    createdAt: serverTimestamp(),
+    likesCount:0
+  }
+)
 
     router.push(`/list/${user.uid}/${listId}`);
   };

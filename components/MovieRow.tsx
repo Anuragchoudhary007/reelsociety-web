@@ -27,7 +27,7 @@ export default function MovieRow({movies,loading}:any){
 
   return(
 
-    <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
 
       {movies.map((movie:any)=>(
 

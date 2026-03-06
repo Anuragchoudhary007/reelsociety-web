@@ -42,3 +42,6 @@ body {
 .animate-fade{
   animation:fade .25s ease-out;
 }
+.scrollbar-hide::-webkit-scrollbar {
+display:none;
+}

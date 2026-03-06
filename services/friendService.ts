@@ -6,7 +6,8 @@ import {
   getDocs,
   deleteDoc,
   doc,
-  serverTimestamp
+  serverTimestamp,
+  getDoc
 } from "firebase/firestore"
 
 import { db } from "@/lib/firebase"
@@ -89,33 +90,55 @@ export async function removeFriend(userId: string, friendId: string) {
 
 // Get Friend List 
 
-export async function getFriends(userId: string) {
+export async function getFriends(uid:string){
 
-  const q = query(
-    collection(db, "friends"),
-    where("userId", "==", userId)
-  )
+const snapshot = await getDocs(
+collection(db,"users",uid,"friends")
+)
 
-  const snap = await getDocs(q)
+const friends = await Promise.all(
 
-  return snap.docs.map(doc => doc.data())
+snapshot.docs.map(async docSnap=>{
+
+const friendId = docSnap.data().friendId
+
+const userDoc = await getDoc(
+doc(db,"users",friendId)
+)
+
+return {
+friendId,
+...userDoc.data()
+}
+
+})
+
+)
+
+return friends
+
 }
 
 // Get Friend Requests 
 
-export async function getFriendRequests(userId: string) {
+export async function getFriendRequests(uid: string) {
 
-  const q = query(
-    collection(db, "friendRequests"),
-    where("to", "==", userId)
-  )
+  const snapshot = await getDocs(
+    query(
+      collection(db, "friendRequests"),
+      where("to", "==", uid),
+      where("status", "==", "pending")
+    )
+  );
 
-  const snap = await getDocs(q)
+  const unique = new Map();
 
-  return snap.docs.map(d => ({
-    id: d.id,
-    ...d.data()
-  }))
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    unique.set(data.from, { id: doc.id, ...data });
+  });
+
+  return Array.from(unique.values());
 }
 
 // User Search

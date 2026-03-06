@@ -53,19 +53,12 @@ export default function MovieCard({movie}:any){
 
       {/* Poster */}
 
-      <Link href={`/movie/${movie.id}`}>
-
-        <img
-          src={
-            movie.poster_path
-              ? IMAGE+movie.poster_path
-              : "/placeholder.png"
-          }
-          className={`absolute inset-0 w-full h-full object-cover rounded-lg shadow-lg transition duration-300
-          ${hover?"scale-110 opacity-0":"scale-100 opacity-100"}`}
-        />
-
-      </Link>
+     <Link href={`/movie/${movie.id}`}>
+  <img
+    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+    className="w-[160px] h-[240px] object-cover rounded-lg hover:scale-105 transition cursor-pointer"
+  />
+</Link>
 
 
       {/* Hover Card */}

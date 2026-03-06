@@ -1,140 +1,115 @@
-"use client";
+"use client"
 
-import { useAuth } from "@/context/AuthContext";
-import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { signOut } from "firebase/auth";
-import { useEffect, useState } from "react";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "@/context/AuthContext"
+import { useEffect, useState } from "react"
+import { db } from "@/lib/firebase"
+import { doc,getDoc,collection,getDocs } from "firebase/firestore"
+import Link from "next/link"
 
-export default function ProfilePage() {
+export default function ProfilePage(){
 
-  const { user } = useAuth();
-  const storage = getStorage();
+const { user } = useAuth()
 
-  const [profile,setProfile] = useState<any>(null)
-  const [bio,setBio] = useState("")
+const [profile,setProfile] = useState<any>(null)
+const [watchlistCount,setWatchlistCount] = useState(0)
+const [listCount,setListCount] = useState(0)
 
-  useEffect(()=>{
+useEffect(()=>{
 
-    if(!user) return
+if(!user) return
 
-    async function load(){
+async function load(){
 
-      const ref = doc(db,"users",user.uid)
-      const snap = await getDoc(ref)
+const userDoc = await getDoc(
+doc(db,"users",user.uid)
+)
 
-      const data = snap.data()
+if(userDoc.exists()){
+setProfile(userDoc.data())
+}
 
-      setProfile(data)
-      setBio(data?.bio || "")
+const watchSnap = await getDocs(
+collection(db,"users",user.uid,"watchlist")
+)
 
-    }
+setWatchlistCount(watchSnap.size)
 
-    load()
+const listSnap = await getDocs(
+collection(db,"users",user.uid,"lists")
+)
 
-  },[user])
+setListCount(listSnap.size)
 
-  async function saveBio(){
+}
 
-    if(!user) return
+load()
 
-    const ref = doc(db,"users",user.uid)
+},[user])
 
-    await updateDoc(ref,{
-      bio
-    })
+if(!user) return null
 
-  }
+return(
 
-  async function logout(){
+<div className="max-w-3xl">
 
-    await signOut(auth)
+<h1 className="text-3xl font-bold mb-8">
+Profile
+</h1>
 
-  }
+<div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex gap-8">
 
-  async function uploadProfilePic(file:any){
+<img
+src={user.photoURL || "/avatar.png"}
+className="w-24 h-24 rounded-full"
+/>
 
-    if(!user || !file) return
+<div>
 
-    const storageRef = ref(storage,`profilePictures/${user.uid}.jpg`)
+<p className="text-xl font-semibold">
+{profile?.username || user.displayName || "User"}
+</p>
 
-    await uploadBytes(storageRef,file)
+<p className="text-gray-400">
+{user.email}
+</p>
 
-    const url = await getDownloadURL(storageRef)
+{profile?.bio && (
+<p className="text-gray-400 mt-2">
+{profile.bio}
+</p>
+)}
 
-    await updateDoc(doc(db,"users",user.uid),{
-      photoURL:url
-    })
+<div className="flex gap-10 mt-6">
 
-    setProfile((prev:any)=>({
-      ...prev,
-      photoURL:url
-    }))
-  }
+<div>
+<p className="text-2xl font-bold">{watchlistCount}</p>
+<p className="text-gray-400">Watchlist</p>
+</div>
 
-  if(!profile) return <div className="p-10 text-white">Loading...</div>
+<div>
+<p className="text-2xl font-bold">{listCount}</p>
+<p className="text-gray-400">Lists</p>
+</div>
 
-  return(
+</div>
 
-    <div className="p-10 text-white max-w-3xl">
+<div className="mt-6">
 
-      <h1 className="text-3xl mb-6">Profile</h1>
+<Link
+href="/edit-profile"
+className="px-4 py-2 bg-white text-black rounded-lg"
+>
+Edit Profile
+</Link>
 
-      {/* PROFILE IMAGE */}
+</div>
 
-      <img
-        src={profile.photoURL || "/avatar.png"}
-        className="w-24 h-24 rounded-full mb-4"
-      />
+</div>
 
-      <input
-        type="file"
-        onChange={(e)=>uploadProfilePic(e.target.files?.[0])}
-        className="mb-6"
-      />
+</div>
 
-      {/* USERNAME */}
+</div>
 
-      <p className="mb-2">
-        Username: {profile.username}
-      </p>
+)
 
-      <p className="mb-6">
-        Email: {profile.email}
-      </p>
-
-      {/* BIO */}
-
-      <div className="mb-6">
-
-        <p className="mb-2">Bio</p>
-
-        <textarea
-          value={bio}
-          onChange={(e)=>setBio(e.target.value)}
-          className="bg-gray-900 w-full p-3"
-        />
-
-        <button
-          onClick={saveBio}
-          className="bg-blue-600 px-4 py-2 mt-3"
-        >
-          Save Bio
-        </button>
-
-      </div>
-
-      {/* LOGOUT */}
-
-      <button
-        onClick={logout}
-        className="bg-red-600 px-4 py-2"
-      >
-        Logout
-      </button>
-
-    </div>
-
-  )
 }

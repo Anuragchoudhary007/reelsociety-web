@@ -10,11 +10,9 @@ export default async function Page({
 
   const headersList = await headers();
   const host = headersList.get("host");
-
-  const res = await fetch(
-    `http://${host}/api/movie/${id}`,
-    { cache: "no-store" }
-  );
+const res = await fetch(
+`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}&append_to_response=credits,videos,similar,watch/providers`
+);
 
 if (!res.ok) {
   return (
