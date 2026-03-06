@@ -12,8 +12,9 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { createActivity } from "@/services/activityService";
 
-export default async function ReviewSection({ movieId, movieTitle }: any) {
+export default function ReviewSection({ movieId, movieTitle }: any) {
   const { user } = useAuth();
 
   const [reviews, setReviews] = useState<any[]>([]);
@@ -46,27 +47,32 @@ export default async function ReviewSection({ movieId, movieTitle }: any) {
 const handleSubmit = async () => {
   if (!user || !text.trim()) return;
 
-  await addDoc(
-    collection(db, "movies", movieId.toString(), "reviews"),
-    {
-      userId: user.uid,
-      username: user.displayName || user.email,
-      comment: text,               // ✅ consistent field
-      createdAt: serverTimestamp() // ✅ correct timestamp
-    }
-  );
+  await createActivity({
+  userId: user.uid,
+  username: user.displayName || "User",
+  userAvatar: user.photoURL || "/avatar.png",
+
+  type: "reviewed",
+
+  movieId: movieId,
+  movieTitle: movieTitle
+})
 
   setText("");
 
   if (user) {
     await addDoc(collection(db, "activity"), {
-      userId: user.uid,
-      username: user.displayName,
-      type: "reviewed",
-      movieId,
-      movieTitle,
-      createdAt: serverTimestamp(),
-    });
+  userId: user.uid,
+  username: user.displayName || "User",
+  userAvatar: user.photoURL || "/avatar.png",
+
+  type: "reviewed",
+
+  movieId,
+  movieTitle,
+
+  createdAt: serverTimestamp()
+})
   }
 };
   /* ================= UI ================= */

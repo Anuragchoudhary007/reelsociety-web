@@ -1,63 +1,157 @@
-"use client";
+"use client"
 
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
+import { useState,useEffect } from "react"
+import Link from "next/link"
+import WatchlistButton from "./WatchlistButton"
+import MovieRating from "./MovieRating"
 
-const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+const IMAGE="https://image.tmdb.org/t/p/w500"
 
-export default function MovieCard({ movie }: any) {
-  const { user } = useAuth();
-  const [isWatched, setIsWatched] = useState(false);
+export default function MovieCard({movie}:any){
 
-  useEffect(() => {
-    if (!user) return;
+  const [hover,setHover]=useState(false)
+  const [video,setVideo]=useState<any>(null)
+  const [details,setDetails]=useState<any>(null)
 
-    const ref = doc(
-      db,
-      "users",
-      user.uid,
-      "watched",
-      movie.id.toString()
-    );
+  useEffect(()=>{
 
-    const unsub = onSnapshot(ref, (snap) => {
-      setIsWatched(snap.exists());
-    });
+    if(!hover) return
 
-    return () => unsub();
-  }, [user, movie.id]);
+    async function load(){
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      transition={{ type: "spring", stiffness: 250 }}
-      className="relative group cursor-pointer"
+      try{
+
+        const res=await fetch(`/api/movie/${movie.id}`)
+        const data=await res.json()
+
+        setDetails(data)
+
+        const vid=data.videos?.results?.find(
+          (v:any)=>v.type==="Trailer" && v.site==="YouTube"
+        )
+
+        setVideo(vid)
+
+      }catch(e){
+        console.error(e)
+      }
+
+    }
+
+    load()
+
+  },[hover,movie.id])
+
+
+  return(
+
+    <div
+      className="relative min-w-[160px] h-[240px] cursor-pointer"
+      onMouseEnter={()=>setHover(true)}
+      onMouseLeave={()=>setHover(false)}
     >
-      {/* Watched Badge */}
-      {isWatched && (
-        <div className="absolute top-2 right-2 z-10 bg-green-600 text-white text-xs px-3 py-1 rounded-full">
-          ✓ Watched
+
+      {/* Poster */}
+
+      <Link href={`/movie/${movie.id}`}>
+
+        <img
+          src={
+            movie.poster_path
+              ? IMAGE+movie.poster_path
+              : "/placeholder.png"
+          }
+          className={`absolute inset-0 w-full h-full object-cover rounded-lg shadow-lg transition duration-300
+          ${hover?"scale-110 opacity-0":"scale-100 opacity-100"}`}
+        />
+
+      </Link>
+
+
+      {/* Hover Card */}
+
+      {hover &&(
+
+        <div className="absolute -top-20 left-0 w-[320px] bg-[#141414] rounded-xl shadow-2xl z-30 overflow-hidden animate-fade">
+
+          {/* Trailer */}
+
+          {video?(
+            <iframe
+              className="w-full h-44 pointer-events-none"
+              src={`https://www.youtube.com/embed/${video.key}?autoplay=1&mute=1&controls=0&loop=1&playlist=${video.key}`}
+              allow="autoplay"
+            />
+          ):(
+            <img
+              src={
+                movie.poster_path
+                  ? IMAGE+movie.poster_path
+                  : "/placeholder.png"
+              }
+              className="w-full h-44 object-cover"
+            />
+          )}
+
+          {/* Info */}
+
+          <div className="p-4 space-y-3">
+
+            <div className="flex justify-between items-center">
+
+              <h3 className="text-sm font-semibold">
+                {movie.title || movie.name}
+              </h3>
+
+              <span className="text-xs text-gray-400">
+                ⭐ {movie.vote_average?.toFixed(1)}
+              </span>
+
+            </div>
+
+
+            {/* Buttons */}
+
+            <div className="flex gap-2">
+
+              <Link
+                href={`/movie/${movie.id}`}
+                className="px-3 py-1 bg-white text-black text-xs rounded"
+              >
+                ▶ Play
+              </Link>
+
+              <WatchlistButton movie={movie}/>
+
+            </div>
+
+
+            {/* Rating */}
+
+            <MovieRating
+              movieId={movie.id}
+              movieTitle={movie.title || movie.name}
+            />
+
+
+            {/* Overview */}
+
+            {details?.overview &&(
+
+              <p className="text-xs text-gray-400 line-clamp-3">
+                {details.overview}
+              </p>
+
+            )}
+
+          </div>
+
         </div>
+
       )}
 
-      <img
-        src={`${IMAGE_BASE}${movie.poster_path}`}
-        className="rounded-md shadow-md group-hover:shadow-xl transition duration-300"
-        alt={movie.title}
-      />
+    </div>
 
-      <div className="mt-3">
-        <p className="text-sm font-medium line-clamp-1">
-          {movie.title}
-        </p>
+  )
 
-        <p className="text-xs text-gray-500 mt-1">
-          ⭐ {movie.vote_average?.toFixed(1)} / 10
-        </p>
-      </div>
-    </motion.div>
-  );
 }

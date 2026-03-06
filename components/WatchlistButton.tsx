@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, setDoc, deleteDoc, getDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { createActivity } from "@/services/activityService";
 
 export default function WatchlistButton({ movie }: any) {
   const { user } = useAuth();
@@ -23,22 +24,24 @@ export default function WatchlistButton({ movie }: any) {
     checkWatchlist();
   }, [user, movie.id]);
 
-  const toggleWatchlist = async () => {
-    if (!user) {
-      alert("Login required");
-      return;
-    }
-await addDoc(collection(db, "activity"), {
-  userId: user.uid,
-  username: user.displayName,
-  type: "watchlist",
-  movieId: movie.id,
-  movieTitle: movie.title,
-  createdAt: serverTimestamp(),
-});
-    setLoading(true);
+const toggleWatchlist = async () => {
+  if (!user) {
+    alert("Login required");
+    return;
+  }
 
-    const ref = doc(db, "users", user.uid, "watchlist", movie.id.toString());
+  setLoading(true);
+
+  const ref = doc(db, "users", user.uid, "watchlist", movie.id.toString());
+
+await setDoc(ref,{
+  movieId: movie.id,
+  title: movie.title || movie.name || "Unknown",
+  poster_path: movie.poster_path || null,
+  backdrop_path: movie.backdrop_path || null,
+  rating: movie.vote_average || null,
+  addedAt: serverTimestamp()
+})
 
     if (saved) {
       await deleteDoc(ref);

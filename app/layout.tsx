@@ -1,37 +1,58 @@
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Sidebar from "@/components/Sidebar";
-import SmoothScroll from "@/components/SmoothScroll";
+import Navbar from "@/components/Navbar";
 import { Playfair_Display, Inter } from "next/font/google";
-
+import Footer from "@/components/Footer"
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400","600","700"],
   variable: "--font-display",
 });
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
+  subsets:["latin"],
+  variable:"--font-body",
 });
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}:{
+  children:React.ReactNode;
+}){
+
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="bg-black text-white font-sans">
-        <SmoothScroll />
+      <body className="bg-black text-white font-body">
+
         <AuthProvider>
+
           <div className="flex min-h-screen">
+
+            {/* Sidebar */}
+
             <Sidebar />
-            <main className="flex-1 p-10">
-              {children}
-            </main>
+
+            {/* Content */}
+
+            <div className="flex flex-col flex-1">
+
+              <Navbar />
+
+              <main className="flex-1 p-10">
+                {children}
+              </main>
+<main className="flex-1 p-10">
+  {children}
+</main>
+
+<Footer />
+            </div>
+
           </div>
+
         </AuthProvider>
+
       </body>
     </html>
   );

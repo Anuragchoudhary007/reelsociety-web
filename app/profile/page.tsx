@@ -1,97 +1,140 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function ProfilePage() {
+
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    ratings: 0,
-    reviews: 0,
-    watchlist: 0,
-    avgRating: 0,
-  });
+  const storage = getStorage();
 
-  useEffect(() => {
-    if (!user) return;
+  const [profile,setProfile] = useState<any>(null)
+  const [bio,setBio] = useState("")
 
-    const fetchStats = async () => {
-      const ratingsSnap = await getDocs(
-        collection(db, "users", user.uid, "ratings")
-      );
+  useEffect(()=>{
 
-      const reviewsSnap = await getDocs(
-        collection(db, "movies")
-      );
+    if(!user) return
 
-      const watchlistSnap = await getDocs(
-        collection(db, "users", user.uid, "watchlist")
-      );
+    async function load(){
 
-      let total = 0;
-      ratingsSnap.forEach((doc) => {
-        total += doc.data().rating;
-      });
+      const ref = doc(db,"users",user.uid)
+      const snap = await getDoc(ref)
 
-      setStats({
-        ratings: ratingsSnap.size,
-        reviews: 0,
-        watchlist: watchlistSnap.size,
-        avgRating:
-          ratingsSnap.size > 0
-            ? parseFloat((total / ratingsSnap.size).toFixed(1))
-            : 0,
-      });
-    };
+      const data = snap.data()
 
-    fetchStats();
-  }, [user]);
+      setProfile(data)
+      setBio(data?.bio || "")
 
-  if (!user) return null;
+    }
 
-  return (
-    <div className="min-h-screen bg-black text-white p-24">
+    load()
 
-      <div className="max-w-5xl mx-auto">
+  },[user])
 
-        <div className="flex items-center gap-8 mb-16">
-          <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-3xl">
-            {user.email?.[0].toUpperCase()}
-          </div>
+  async function saveBio(){
 
-          <div>
-            <h1 className="text-4xl font-display">
-              {user.email}
-            </h1>
-            <p className="text-gray-400">
-              Member since 2026
-            </p>
-          </div>
-        </div>
+    if(!user) return
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-6">
+    const ref = doc(db,"users",user.uid)
 
-          <StatCard title="Ratings" value={stats.ratings} />
-          <StatCard title="Avg Rating" value={stats.avgRating} />
-          <StatCard title="Watchlist" value={stats.watchlist} />
-          <StatCard title="Reviews" value={stats.reviews} />
+    await updateDoc(ref,{
+      bio
+    })
 
-        </div>
+  }
+
+  async function logout(){
+
+    await signOut(auth)
+
+  }
+
+  async function uploadProfilePic(file:any){
+
+    if(!user || !file) return
+
+    const storageRef = ref(storage,`profilePictures/${user.uid}.jpg`)
+
+    await uploadBytes(storageRef,file)
+
+    const url = await getDownloadURL(storageRef)
+
+    await updateDoc(doc(db,"users",user.uid),{
+      photoURL:url
+    })
+
+    setProfile((prev:any)=>({
+      ...prev,
+      photoURL:url
+    }))
+  }
+
+  if(!profile) return <div className="p-10 text-white">Loading...</div>
+
+  return(
+
+    <div className="p-10 text-white max-w-3xl">
+
+      <h1 className="text-3xl mb-6">Profile</h1>
+
+      {/* PROFILE IMAGE */}
+
+      <img
+        src={profile.photoURL || "/avatar.png"}
+        className="w-24 h-24 rounded-full mb-4"
+      />
+
+      <input
+        type="file"
+        onChange={(e)=>uploadProfilePic(e.target.files?.[0])}
+        className="mb-6"
+      />
+
+      {/* USERNAME */}
+
+      <p className="mb-2">
+        Username: {profile.username}
+      </p>
+
+      <p className="mb-6">
+        Email: {profile.email}
+      </p>
+
+      {/* BIO */}
+
+      <div className="mb-6">
+
+        <p className="mb-2">Bio</p>
+
+        <textarea
+          value={bio}
+          onChange={(e)=>setBio(e.target.value)}
+          className="bg-gray-900 w-full p-3"
+        />
+
+        <button
+          onClick={saveBio}
+          className="bg-blue-600 px-4 py-2 mt-3"
+        >
+          Save Bio
+        </button>
 
       </div>
 
-    </div>
-  );
-}
+      {/* LOGOUT */}
 
-function StatCard({ title, value }: any) {
-  return (
-    <div className="bg-white/5 p-8 rounded-3xl border border-white/10 text-center hover:scale-105 transition">
-      <p className="text-4xl font-bold text-red-500">{value}</p>
-      <p className="text-gray-400 mt-2">{title}</p>
+      <button
+        onClick={logout}
+        className="bg-red-600 px-4 py-2"
+      >
+        Logout
+      </button>
+
     </div>
-  );
+
+  )
 }
