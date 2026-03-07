@@ -6,28 +6,26 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-
   const { user } = useAuth();
 
   return (
-
-    <nav className="flex items-center justify-between px-10 py-4 border-b border-white/10">
-
+    <nav className="flex items-center justify-between px-10 py-4 border-b border-white/10 sticky top-0 z-40 bg-[#0f0f0f]/80 backdrop-blur-md">
       <Link href="/">
-        <h1 className="text-xl font-semibold text-white">
+        <h1 className="text-xl font-bold text-white tracking-tight">
           ReelSociety
         </h1>
       </Link>
 
-      <input
-        placeholder="Search movies..."
-        className="w-[420px] px-4 py-2 bg-black border border-white/20 rounded-lg"
-      />
-className="hover:bg-white/5 transition flex items-center gap-3 p-3"
-      <div className="flex items-center gap-4">
+      <div className="relative">
+        <input
+          placeholder="Search movies..."
+          className="w-[420px] px-4 py-2 bg-black border border-white/10 rounded-lg text-sm focus:outline-none focus:border-white/30 transition"
+        />
+      </div>
 
+      <div className="flex items-center gap-2">
         <Link href="/profile">
-          <button className="hover:bg-white/5 transition flex items-center gap-3 p-3">
+          <button className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition">
             Profile
           </button>
         </Link>
@@ -35,15 +33,12 @@ className="hover:bg-white/5 transition flex items-center gap-3 p-3"
         {user && (
           <button
             onClick={() => signOut(auth)}
-            className="hover:bg-white/5 transition flex items-center gap-3 p-3"
+            className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition"
           >
             Logout
           </button>
         )}
-
       </div>
-
     </nav>
-
   );
 }

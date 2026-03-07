@@ -1,115 +1,169 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/context/AuthContext"
-import { useEffect, useState } from "react"
-import { db } from "@/lib/firebase"
-import { doc,getDoc,collection,getDocs } from "firebase/firestore"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
-export default function ProfilePage(){
+export default function ProfilePage() {
+  const [user, setUser] = useState<any>(null);
+  const [watched, setWatched] = useState<any[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [lists, setLists] = useState<any[]>([]);
 
-const { user } = useAuth()
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!u) return;
 
-const [profile,setProfile] = useState<any>(null)
-const [watchlistCount,setWatchlistCount] = useState(0)
-const [listCount,setListCount] = useState(0)
+      setUser(u);
 
-useEffect(()=>{
+      const watchedSnap = await getDocs(
+        collection(db, "users", u.uid, "watched")
+      );
 
-if(!user) return
+      const watchlistSnap = await getDocs(
+        collection(db, "users", u.uid, "watchlist")
+      );
 
-async function load(){
+      const listsSnap = await getDocs(
+        collection(db, "users", u.uid, "lists")
+      );
 
-const userDoc = await getDoc(
-doc(db,"users",user.uid)
-)
+      setWatched(watchedSnap.docs.map((d) => d.data()));
+      setWatchlist(watchlistSnap.docs.map((d) => d.data()));
+      setLists(listsSnap.docs.map((d) => d.data()));
+    });
 
-if(userDoc.exists()){
-setProfile(userDoc.data())
-}
+    return () => unsub();
+  }, []);
 
-const watchSnap = await getDocs(
-collection(db,"users",user.uid,"watchlist")
-)
+  if (!user) return <p className="text-white p-8">Loading...</p>;
 
-setWatchlistCount(watchSnap.size)
+  return (
+    <div className="text-white">
 
-const listSnap = await getDocs(
-collection(db,"users",user.uid,"lists")
-)
+      {/* HERO BANNER */}
+      <div className="relative h-[300px] w-full overflow-hidden">
+        <img
+          src="https://image.tmdb.org/t/p/original/5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg"
+          className="w-full h-full object-cover opacity-40"
+        />
 
-setListCount(listSnap.size)
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black"></div>
+      </div>
 
-}
+      {/* PROFILE CARD */}
+      <div className="max-w-5xl mx-auto -mt-24 relative z-10">
 
-load()
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex items-center gap-8">
 
-},[user])
+          <img
+            src={user.photoURL || "/avatar.png"}
+            className="w-24 h-24 rounded-full object-cover border border-zinc-700"
+          />
 
-if(!user) return null
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold">{user.displayName || "User"}</h2>
 
-return(
+            <p className="text-zinc-400">{user.email}</p>
 
-<div className="max-w-3xl">
+            <p className="text-zinc-500 mt-2">
+              Movie lover 🍿
+            </p>
 
-<h1 className="text-3xl font-bold mb-8">
-Profile
-</h1>
+            <button className="mt-4 bg-white text-black px-4 py-2 rounded-lg text-sm hover:bg-gray-200">
+              Edit Profile
+            </button>
+          </div>
 
-<div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex gap-8">
+          <div className="flex gap-10 text-center">
 
-<img
-src={user.photoURL || "/avatar.png"}
-className="w-24 h-24 rounded-full"
-/>
+            <div>
+              <p className="text-2xl font-bold">{watched.length}</p>
+              <p className="text-zinc-400 text-sm">Watched</p>
+            </div>
 
-<div>
+            <div>
+              <p className="text-2xl font-bold">{watchlist.length}</p>
+              <p className="text-zinc-400 text-sm">Watchlist</p>
+            </div>
 
-<p className="text-xl font-semibold">
-{profile?.username || user.displayName || "User"}
-</p>
+            <div>
+              <p className="text-2xl font-bold">{lists.length}</p>
+              <p className="text-zinc-400 text-sm">Lists</p>
+            </div>
 
-<p className="text-gray-400">
-{user.email}
-</p>
+          </div>
+        </div>
+      </div>
 
-{profile?.bio && (
-<p className="text-gray-400 mt-2">
-{profile.bio}
-</p>
-)}
+      {/* RECENTLY WATCHED */}
+      <section className="max-w-6xl mx-auto mt-16 px-4">
 
-<div className="flex gap-10 mt-6">
+        <h2 className="text-2xl font-semibold mb-6">
+          Recently Watched
+        </h2>
 
-<div>
-<p className="text-2xl font-bold">{watchlistCount}</p>
-<p className="text-gray-400">Watchlist</p>
-</div>
+        <div className="grid grid-cols-6 gap-4">
 
-<div>
-<p className="text-2xl font-bold">{listCount}</p>
-<p className="text-gray-400">Lists</p>
-</div>
+          {watched.slice(0, 6).map((movie, i) => (
+            <img
+              key={i}
+              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+              className="rounded-lg hover:scale-105 transition"
+            />
+          ))}
 
-</div>
+        </div>
+      </section>
 
-<div className="mt-6">
+      {/* MY LISTS */}
+      <section className="max-w-6xl mx-auto mt-16 px-4">
 
-<Link
-href="/edit-profile"
-className="px-4 py-2 bg-white text-black rounded-lg"
->
-Edit Profile
-</Link>
+        <h2 className="text-2xl font-semibold mb-6">
+          My Lists
+        </h2>
 
-</div>
+        <div className="grid grid-cols-3 gap-6">
 
-</div>
+          {lists.map((list: any, i) => (
+            <div
+              key={i}
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-600 transition"
+            >
+              <h3 className="text-lg font-semibold">
+                {list.title}
+              </h3>
 
-</div>
+              <p className="text-zinc-400 text-sm mt-2">
+                {list.description || "Movie list"}
+              </p>
+            </div>
+          ))}
 
-</div>
+        </div>
+      </section>
 
-)
+      {/* WATCHLIST */}
+      <section className="max-w-6xl mx-auto mt-16 px-4 mb-20">
 
+        <h2 className="text-2xl font-semibold mb-6">
+          Watchlist
+        </h2>
+
+        <div className="grid grid-cols-6 gap-4">
+
+          {watchlist.slice(0, 6).map((movie, i) => (
+            <img
+              key={i}
+              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+              className="rounded-lg hover:scale-105 transition"
+            />
+          ))}
+
+        </div>
+      </section>
+
+    </div>
+  );
 }

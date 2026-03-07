@@ -1,66 +1,101 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { doc, setDoc, deleteDoc, getDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
-import { createActivity } from "@/services/activityService";
+import { useEffect, useState } from "react"
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  getDoc,
+  serverTimestamp
+} from "firebase/firestore"
+
+import { db } from "@/lib/firebase"
+import { useAuth } from "@/context/AuthContext"
 
 export default function WatchlistButton({ movie }: any) {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+
+  const { user } = useAuth()
+
+  const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    if (!user) return;
+
+    if (!user || !movie?.id) return
 
     async function checkWatchlist() {
-      if (!user) return;
-      const ref = doc(db, "users", user.uid, "watchlist", movie.id.toString());
-      const snap = await getDoc(ref);
-      setSaved(snap.exists());
+
+      const ref = doc(
+        db,
+        "users",
+        user.uid,
+        "watchlist",
+        String(movie.id)
+      )
+
+      const snap = await getDoc(ref)
+
+      setSaved(snap.exists())
+
     }
 
-    checkWatchlist();
-  }, [user, movie.id]);
+    checkWatchlist()
 
-const toggleWatchlist = async () => {
-  if (!user) {
-    alert("Login required");
-    return;
+  }, [user, movie?.id])
+
+  async function toggleWatchlist() {
+
+    if (!user || !movie?.id) {
+      alert("Login required")
+      return
+    }
+
+    setLoading(true)
+
+    const ref = doc(
+      db,
+      "users",
+      user.uid,
+      "watchlist",
+      String(movie.id)
+    )
+
+    try {
+
+      if (saved) {
+
+        await deleteDoc(ref)
+        setSaved(false)
+
+      } else {
+
+        await setDoc(ref, {
+
+          movieId: movie.id,
+          title: movie.title || movie.name || "Unknown Movie",
+          poster_path: movie.poster_path || null,
+          backdrop_path: movie.backdrop_path || null,
+          rating: movie.vote_average || null,
+          addedAt: serverTimestamp()
+
+        })
+
+        setSaved(true)
+
+      }
+
+    } catch (err) {
+
+      console.error("Watchlist error:", err)
+
+    }
+
+    setLoading(false)
+
   }
 
-  setLoading(true);
-
-  const ref = doc(db, "users", user.uid, "watchlist", movie.id.toString());
-
-await setDoc(ref,{
-  movieId: movie.id,
-  title: movie.title || movie.name || "Unknown",
-  poster_path: movie.poster_path || null,
-  backdrop_path: movie.backdrop_path || null,
-  rating: movie.vote_average || null,
-  addedAt: serverTimestamp()
-})
-
-    if (saved) {
-      await deleteDoc(ref);
-      setSaved(false);
-    } else {
-      await setDoc(ref, {
-        movieId: movie.id,
-        title: movie.title,
-        poster: movie.poster_path,
-        backdrop: movie.backdrop_path,
-        addedAt: serverTimestamp(),
-      });
-      setSaved(true);
-    }
-
-    setLoading(false);
-  };
-
   return (
+
     <button
       onClick={toggleWatchlist}
       disabled={loading}
@@ -70,7 +105,10 @@ await setDoc(ref,{
           : "border-white/30 hover:bg-white/10"
       }`}
     >
+
       {saved ? "✓ In Watchlist" : "+ Watchlist"}
+
     </button>
-  );
+
+  )
 }

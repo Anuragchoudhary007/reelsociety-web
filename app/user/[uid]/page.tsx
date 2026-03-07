@@ -1,109 +1,235 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import { db } from "@/lib/firebase"
-import { doc, getDoc, collection, getDocs } from "firebase/firestore"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { db } from "@/lib/firebase";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import Link from "next/link";
 
 export default function UserProfilePage() {
-  const params = useParams()
-  const uid = params.uid as string
 
-  const [profile, setProfile] = useState<any>(null)
-  const [lists, setLists] = useState<any[]>([])
-  const [watched, setWatched] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const { uid } = useParams();
+
+  const [profile, setProfile] = useState<any>(null);
+  const [lists, setLists] = useState<any[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!uid) return
 
     async function load() {
-      try {
-        const userSnap = await getDoc(doc(db, "users", uid))
-        if (userSnap.exists()) {
-          setProfile(userSnap.data())
-        }
 
-        const watchSnap = await getDocs(collection(db, "users", uid, "watched"))
-        setWatched(watchSnap.size)
+      if (!uid) return;
 
-        const listSnap = await getDocs(collection(db, "users", uid, "lists"))
-        setLists(listSnap.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        })))
-      } catch (error) {
-        console.error("Error loading profile:", error)
-      } finally {
-        setLoading(false)
+      const snap = await getDoc(doc(db, "users", uid as string));
+
+      if (snap.exists()) {
+        setProfile(snap.data());
       }
+
+      const listSnap = await getDocs(
+        collection(db, "users", uid as string, "lists")
+      );
+
+      setLists(listSnap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })));
+
+
+      const friendSnap = await getDocs(
+        collection(db, "users", uid as string, "friends")
+      );
+
+      setFriends(friendSnap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })));
+
     }
 
-    load()
-  }, [uid])
+    load();
 
-  if (loading) return <div className="p-10 text-gray-500">Loading profile...</div>
-  if (!profile) return <div className="p-10 text-gray-500">User not found.</div>
+  }, [uid]);
+
+
+
+  if (!profile) return <div className="p-8">Loading...</div>;
+
+
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
-      <div className="flex flex-col md:flex-row items-center gap-8 mb-12 bg-white/5 p-8 rounded-3xl border border-white/10">
+
+    <div className="max-w-6xl mx-auto text-white px-4">
+
+
+      {/* PROFILE HEADER */}
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex items-center gap-8 mt-10">
+
         <img
           src={profile.photoURL || "/avatar.png"}
-          alt={profile.username}
-          className="w-32 h-32 rounded-full border-4 border-white/10 object-cover"
+          className="w-24 h-24 rounded-full"
         />
 
-        <div className="text-center md:text-left flex-grow">
-          <h1 className="text-4xl font-bold text-white mb-2">
+        <div className="flex-1">
+
+          <h1 className="text-3xl font-bold">
             {profile.username}
           </h1>
-          <p className="text-gray-400 max-w-md">
+
+          <p className="text-zinc-400 mt-1">
             {profile.bio || "No bio yet."}
           </p>
+
         </div>
 
-        <div className="flex gap-8 border-l border-white/10 pl-8">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-white">{watched}</p>
-            <p className="text-gray-500 text-xs uppercase tracking-widest">Watched</p>
+        <div className="flex gap-10 text-center">
+
+          <div>
+            <p className="text-2xl font-bold">
+              {profile.watchedCount || 0}
+            </p>
+            <p className="text-zinc-400 text-sm">
+              Watched
+            </p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-white">{lists.length}</p>
-            <p className="text-gray-500 text-xs uppercase tracking-widest">Lists</p>
+
+          <div>
+            <p className="text-2xl font-bold">
+              {lists.length}
+            </p>
+            <p className="text-zinc-400 text-sm">
+              Lists
+            </p>
           </div>
+
         </div>
+
       </div>
 
-      <section>
-        <h2 className="text-xl font-semibold mb-6 text-white flex items-center gap-2">
+
+
+      {/* FRIENDS SECTION */}
+
+      <div className="mt-16">
+
+        <h2 className="text-xl font-semibold mb-6">
+          Friends
+        </h2>
+
+        {friends.length === 0 && (
+          <p className="text-zinc-500">
+            No friends yet.
+          </p>
+        )}
+
+        <div className="grid grid-cols-4 gap-6">
+
+          {friends.map((f) => (
+            <FriendCard key={f.id} friendId={f.friendId} />
+          ))}
+
+        </div>
+
+      </div>
+
+
+
+      {/* PUBLIC LISTS */}
+
+      <div className="mt-16 mb-20">
+
+        <h2 className="text-xl font-semibold mb-6">
           Public Lists
         </h2>
 
-        {lists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lists.map((list) => (
-              <Link
-                key={list.id}
-                href={`/lists/${list.id}`}
-                className="group bg-white/5 border border-white/10 p-5 rounded-2xl hover:border-white/30 transition duration-300"
-              >
-                <h3 className="text-lg font-semibold text-gray-200 group-hover:text-white transition">
-                  {list.name}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {list.count || 0} items
-                </p>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 text-gray-500">
-            No public lists created yet.
-          </div>
-        )}
-      </section>
+        <div className="grid grid-cols-2 gap-6">
+
+          {lists.map((list) => (
+
+            <Link
+              key={list.id}
+              href={`/lists/${list.id}`}
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-600 transition"
+            >
+
+              <h3 className="text-lg font-semibold">
+                {list.title}
+              </h3>
+
+              <p className="text-zinc-400 text-sm mt-2">
+                {list.description || "Movie list"}
+              </p>
+
+              <p className="text-zinc-500 text-sm mt-4">
+                {list.items?.length || 0} items
+              </p>
+
+            </Link>
+
+          ))}
+
+        </div>
+
+      </div>
+
+
     </div>
-  )
+
+  );
+
+}
+
+
+
+function FriendCard({ friendId }: any) {
+
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+
+    async function load() {
+
+      const snap = await getDoc(doc(db, "users", friendId));
+
+      if (snap.exists()) {
+        setProfile(snap.data());
+      }
+
+    }
+
+    load();
+
+  }, [friendId]);
+
+
+  if (!profile) return null;
+
+
+  return (
+
+    <Link
+      href={`/user/${friendId}`}
+      className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-3 hover:border-zinc-600 transition"
+    >
+
+      <img
+        src={profile.photoURL || "/avatar.png"}
+        className="w-10 h-10 rounded-full"
+      />
+
+      <span className="text-blue-400 hover:underline">
+        {profile.username}
+      </span>
+
+    </Link>
+
+  );
+
 }
