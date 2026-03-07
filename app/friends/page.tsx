@@ -17,45 +17,56 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function FriendsPage() {
+
   const { user } = useAuth();
+  const uid = user?.uid;
 
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
 
-useEffect(() => {
+  /* ================= LOAD FRIENDS ================= */
 
-  if (!user) return
+  useEffect(() => {
 
-  const uid = user.uid
+    if (!uid) return;
 
-  async function load() {
+    async function load() {
 
-    const req = await getFriendRequests(uid)
-    const fr = await getFriends(uid)
+      const req = await getFriendRequests(uid);
+      const fr = await getFriends(uid);
 
-    setRequests(req)
-    setFriends(fr)
+      setRequests(req);
+      setFriends(fr);
 
-  }
+    }
 
-  load()
+    load();
 
-}, [user])
+  }, [uid]);
+
+
+  /* ================= SEARCH USERS ================= */
 
   async function handleSearch() {
+
     if (!search) return;
+
     const users = await searchUsers(search);
+
     setResults(users);
+
   }
 
+
   return (
+
     <div className="max-w-5xl mx-auto text-white px-4 py-8">
 
       <h1 className="text-3xl font-bold mb-10">Friends</h1>
 
-      {/* Add Friends */}
+      {/* ================= ADD FRIENDS ================= */}
 
       <div className="mb-12 bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
 
@@ -104,19 +115,25 @@ useEffect(() => {
               </div>
 
               <button
-                onClick={() => sendFriendRequest(user!.uid, u.id)}
+                onClick={() => {
+                  if (!uid) return;
+                  sendFriendRequest(uid, u.id);
+                }}
                 className="bg-blue-600 px-4 py-1.5 rounded-lg hover:bg-blue-700 text-sm"
               >
                 Add
               </button>
 
             </div>
+
           );
+
         })}
 
       </div>
 
-      {/* Requests */}
+
+      {/* ================= FRIEND REQUESTS ================= */}
 
       <div className="mb-12">
 
@@ -132,7 +149,8 @@ useEffect(() => {
 
       </div>
 
-      {/* Friends */}
+
+      {/* ================= FRIEND LIST ================= */}
 
       <div>
 
@@ -143,14 +161,21 @@ useEffect(() => {
         )}
 
         {friends.map((f) => (
-          <FriendCard key={f.friendId} friend={f} user={user} />
+          <FriendCard key={f.friendId} friend={f} uid={uid} />
         ))}
 
       </div>
 
     </div>
+
   );
+
 }
+
+
+/* =========================================================
+   FRIEND REQUEST CARD
+========================================================= */
 
 function FriendRequestCard({ request }: any) {
 
@@ -163,6 +188,7 @@ function FriendRequestCard({ request }: any) {
       const snap = await getDoc(doc(db, "users", request.from));
 
       if (snap.exists()) setProfile(snap.data());
+
     }
 
     load();
@@ -175,7 +201,7 @@ function FriendRequestCard({ request }: any) {
 
   return (
 
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl">
+    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl mb-3">
 
       <div className="flex items-center gap-3">
 
@@ -188,7 +214,9 @@ function FriendRequestCard({ request }: any) {
       <div className="flex gap-3">
 
         <button
-          onClick={() => acceptFriendRequest(request.id, request.from, request.to)}
+          onClick={() =>
+            acceptFriendRequest(request.id, request.from, request.to)
+          }
           className="bg-green-600 px-4 py-1.5 rounded-lg hover:bg-green-700 text-sm"
         >
           Accept
@@ -204,10 +232,17 @@ function FriendRequestCard({ request }: any) {
       </div>
 
     </div>
+
   );
+
 }
 
-function FriendCard({ friend, user }: any) {
+
+/* =========================================================
+   FRIEND CARD
+========================================================= */
+
+function FriendCard({ friend, uid }: any) {
 
   const [profile, setProfile] = useState<any>(null);
 
@@ -218,6 +253,7 @@ function FriendCard({ friend, user }: any) {
       const snap = await getDoc(doc(db, "users", friend.friendId));
 
       if (snap.exists()) setProfile(snap.data());
+
     }
 
     load();
@@ -230,7 +266,7 @@ function FriendCard({ friend, user }: any) {
 
   return (
 
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl hover:border-zinc-700">
+    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl hover:border-zinc-700 mb-3">
 
       <Link href={`/user/${friend.friendId}`}>
 
@@ -247,7 +283,10 @@ function FriendCard({ friend, user }: any) {
       </Link>
 
       <button
-        onClick={() => removeFriend(user.uid, friend.friendId)}
+        onClick={() => {
+          if (!uid) return;
+          removeFriend(uid, friend.friendId);
+        }}
         className="text-zinc-500 hover:text-red-500"
       >
         Remove
@@ -256,4 +295,5 @@ function FriendCard({ friend, user }: any) {
     </div>
 
   );
+
 }
