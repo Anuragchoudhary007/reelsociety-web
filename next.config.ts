@@ -1,19 +1,28 @@
-// import type { NextConfig } from "next"
+import type { NextConfig } from "next";
 
-// const nextConfig: NextConfig = {
-//   turbopack: {
-//     root: __dirname,
-//   },
-// }
+const nextConfig: NextConfig = {
 
-// export default nextConfig
-const nextConfig = {
-  images: {
-    domains: ["image.tmdb.org"],
+  images:{
+    remotePatterns:[
+      {
+        protocol:"https",
+        hostname:"image.tmdb.org"
+      },
+      {
+        protocol:"https",
+        hostname:"api.dicebear.com"
+      },
+      {
+        protocol:"https",
+        hostname:"firebasestorage.googleapis.com"
+      }
+    ]
   },
-  turbopack: {
-    root: __dirname,
-  },
+
+  turbopack:{
+    root:__dirname
+  }
+
 }
 
 export default nextConfig

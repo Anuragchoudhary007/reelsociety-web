@@ -2,26 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ================= BASE ================= */
+
 @layer base {
+
   body {
-    @apply bg-[#0f0f0f] text-white;
+    @apply bg-[#0b0b0b] text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
 }
+
+/* ================= COMPONENTS ================= */
 
 @layer components {
+
   .card-base {
-    @apply bg-white/5 border border-white/10 rounded-2xl transition-all duration-300;
+    @apply
+    bg-white/5
+    border
+    border-white/10
+    rounded-2xl
+    backdrop-blur
+    transition-all
+    duration-300
+    hover:border-white/20
+    hover:bg-white/10;
   }
+
 }
+
+/* ================= CINEMATIC EFFECTS ================= */
 
 @keyframes bassGlow {
+
   0% { filter: drop-shadow(0 0 20px rgba(255,0,0,0.3)); }
+
   50% { filter: drop-shadow(0 0 80px rgba(255,0,0,0.9)); }
+
   100% { filter: drop-shadow(0 0 20px rgba(255,0,0,0.3)); }
+
 }
 
+.bass {
+  animation: bassGlow 4s infinite ease-in-out;
+}
+
+/* ================= FADE PAGE ================= */
+
+@keyframes fade {
+
+  from {
+    opacity: 0;
+    transform: scale(.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+}
+
+.animate-fade {
+  animation: fade .3s ease-out forwards;
+}
+
+/* ================= FILM GRAIN ================= */
+
 @keyframes grainMove {
+
   0% { transform: translate(0,0); }
   10% { transform: translate(-5%, -5%); }
   20% { transform: translate(-10%, 5%); }
@@ -33,16 +83,10 @@
   80% { transform: translate(-15%, 0); }
   90% { transform: translate(10%, 5%); }
   100% { transform: translate(0,0); }
+
 }
 
-@keyframes fade {
-  from { opacity: 0; transform: scale(.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.bass {
-  animation: bassGlow 4s infinite ease-in-out;
-}
+/* ================= SCROLLBAR ================= */
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -51,8 +95,4 @@
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.animate-fade {
-  animation: fade .25s ease-out forwards;
 }

@@ -1,80 +1,135 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext";
+
+const IMAGE = "https://image.tmdb.org/t/p/w500";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+
+  const { user } = useAuth();
+
+  const [profile, setProfile] = useState<any>(null);
   const [watched, setWatched] = useState<any[]>([]);
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [lists, setLists] = useState<any[]>([]);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) return;
 
-      setUser(u);
+    if (!user) return;
+
+    async function loadProfile() {
+
+      const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+      if (profileSnap.exists()) {
+        setProfile(profileSnap.data());
+      }
 
       const watchedSnap = await getDocs(
-        collection(db, "users", u.uid, "watched")
+        collection(db, "users", user.uid, "watched")
       );
 
       const watchlistSnap = await getDocs(
-        collection(db, "users", u.uid, "watchlist")
+        collection(db, "users", user.uid, "watchlist")
       );
 
       const listsSnap = await getDocs(
-        collection(db, "users", u.uid, "lists")
+        collection(db, "users", user.uid, "lists")
       );
 
       setWatched(watchedSnap.docs.map((d) => d.data()));
       setWatchlist(watchlistSnap.docs.map((d) => d.data()));
       setLists(listsSnap.docs.map((d) => d.data()));
-    });
+    }
 
-    return () => unsub();
-  }, []);
+    loadProfile();
+
+  }, [user]);
 
   if (!user) return <p className="text-white p-8">Loading...</p>;
 
+  /* ---------- USERNAME ---------- */
+
+  const username =
+    profile?.username ||
+    user.email?.split("@")[0];
+
+  /* ---------- AVATAR (DiceBear Bottts) ---------- */
+
+  const photo =
+    profile?.photoURL ||
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+
   return (
+
     <div className="text-white">
 
       {/* HERO BANNER */}
+
       <div className="relative h-[300px] w-full overflow-hidden">
+
         <img
           src="https://image.tmdb.org/t/p/original/5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg"
           className="w-full h-full object-cover opacity-40"
         />
 
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black"></div>
+
       </div>
 
+
       {/* PROFILE CARD */}
+
       <div className="max-w-5xl mx-auto -mt-24 relative z-10">
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex items-center gap-8">
 
-          <img
-            src={user.photoURL || "/avatar.png"}
-            className="w-24 h-24 rounded-full object-cover border border-zinc-700"
-          />
+          {/* Avatar */}
+
+          <div className="relative">
+
+            <img
+              src={photo}
+              className="w-24 h-24 rounded-full bg-zinc-800 object-cover border border-zinc-700"
+            />
+
+          </div>
+
+
+          {/* Profile Info */}
 
           <div className="flex-1">
-            <h2 className="text-3xl font-bold">{user.displayName || "User"}</h2>
 
-            <p className="text-zinc-400">{user.email}</p>
+            <h2 className="text-3xl font-bold">
+              {username}
+            </h2>
 
-            <p className="text-zinc-500 mt-2">
-              Movie lover 🍿
+            <p className="text-zinc-400">
+              @{username}
             </p>
 
-            <button className="mt-4 bg-white text-black px-4 py-2 rounded-lg text-sm hover:bg-gray-200">
+            <p className="text-zinc-500">
+              {user.email}
+            </p>
+
+            <p className="text-zinc-500 mt-2">
+              {profile?.bio || "Movie lover 🍿"}
+            </p>
+
+            <button
+              onClick={() => alert("Edit profile coming soon")}
+              className="mt-4 bg-white text-black px-4 py-2 rounded-lg text-sm hover:bg-gray-200"
+            >
               Edit Profile
             </button>
+
           </div>
+
+
+          {/* Stats */}
 
           <div className="flex gap-10 text-center">
 
@@ -94,10 +149,14 @@ export default function ProfilePage() {
             </div>
 
           </div>
+
         </div>
+
       </div>
 
-      {/* RECENTLY WATCHED */}
+
+      {/* Recently Watched */}
+
       <section className="max-w-6xl mx-auto mt-16 px-4">
 
         <h2 className="text-2xl font-semibold mb-6">
@@ -107,17 +166,27 @@ export default function ProfilePage() {
         <div className="grid grid-cols-6 gap-4">
 
           {watched.slice(0, 6).map((movie, i) => (
+
             <img
               key={i}
-              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+              src={
+                movie.poster_path
+                  ? `${IMAGE}${movie.poster_path}`
+                  : "/poster.png"
+              }
+              onError={(e: any) => (e.target.src = "/poster.png")}
               className="rounded-lg hover:scale-105 transition"
             />
+
           ))}
 
         </div>
+
       </section>
 
-      {/* MY LISTS */}
+
+      {/* My Lists */}
+
       <section className="max-w-6xl mx-auto mt-16 px-4">
 
         <h2 className="text-2xl font-semibold mb-6">
@@ -127,10 +196,12 @@ export default function ProfilePage() {
         <div className="grid grid-cols-3 gap-6">
 
           {lists.map((list: any, i) => (
+
             <div
               key={i}
               className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-600 transition"
             >
+
               <h3 className="text-lg font-semibold">
                 {list.title}
               </h3>
@@ -138,13 +209,18 @@ export default function ProfilePage() {
               <p className="text-zinc-400 text-sm mt-2">
                 {list.description || "Movie list"}
               </p>
+
             </div>
+
           ))}
 
         </div>
+
       </section>
 
-      {/* WATCHLIST */}
+
+      {/* Watchlist */}
+
       <section className="max-w-6xl mx-auto mt-16 px-4 mb-20">
 
         <h2 className="text-2xl font-semibold mb-6">
@@ -154,14 +230,22 @@ export default function ProfilePage() {
         <div className="grid grid-cols-6 gap-4">
 
           {watchlist.slice(0, 6).map((movie, i) => (
+
             <img
               key={i}
-              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+              src={
+                movie.poster_path
+                  ? `${IMAGE}${movie.poster_path}`
+                  : "/poster.png"
+              }
+              onError={(e: any) => (e.target.src = "/poster.png")}
               className="rounded-lg hover:scale-105 transition"
             />
+
           ))}
 
         </div>
+
       </section>
 
     </div>

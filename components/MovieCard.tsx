@@ -43,8 +43,11 @@ export default function MovieCard({ movie }: any) {
       onMouseLeave={() => setHover(false)}
     >
       <img
-        src={`${IMAGE}${movie.poster_path}`}
-        alt={movie.title || movie.name}
+src={
+  movie.poster_path
+  ? `${IMAGE}${movie.poster_path}`
+  : "/poster.png"
+}        alt={movie.title || movie.name}
         className={`absolute inset-0 w-full h-full object-cover rounded-lg shadow-lg transition-all duration-300 ${
           hover && isDesktop ? "scale-110 opacity-0" : "scale-100 opacity-100"
         }`}

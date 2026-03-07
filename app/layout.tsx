@@ -8,21 +8,41 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
+
     <html lang="en">
-      <body className="bg-black text-white">
+
+      <body className="bg-[#0b0b0b] text-white antialiased">
 
         <AuthProvider>
 
           <div className="flex h-screen overflow-hidden">
 
+            {/* Sidebar */}
+
             <Sidebar />
+
+            {/* Main */}
 
             <div className="flex-1 flex flex-col">
 
               <Navbar />
 
-              <main className="flex-1 overflow-y-auto px-10 py-8 max-w-[1600px] mx-auto w-full">
+              {/* Page content */}
+
+              <main className="
+                flex-1
+                overflow-y-auto
+                px-6
+                md:px-10
+                lg:px-14
+                py-8
+                max-w-[1800px]
+                mx-auto
+                w-full
+                animate-fade
+              ">
 
                 {children}
 
@@ -35,6 +55,9 @@ export default function RootLayout({
         </AuthProvider>
 
       </body>
+
     </html>
+
   );
+
 }

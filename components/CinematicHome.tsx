@@ -9,18 +9,28 @@ import { useState } from "react"
 
 export default function CinematicHome() {
 
-  const [recentWatchedMovieId, setRecentWatchedMovieId] = useState<number | null>(null)
+  const [recentWatchedMovieId, setRecentWatchedMovieId] =
+    useState<number | null>(null)
 
   return (
 
-    <>
+    <div className="space-y-20">
 
       <HeroBanner />
 
-      <div className="space-y-16 px-4 md:px-10 py-8">
+      <div className="
+        space-y-20
+        px-4
+        md:px-8
+        lg:px-12
+      ">
 
         {recentWatchedMovieId && (
-          <RecommendationRow movieId={recentWatchedMovieId} />
+
+          <RecommendationRow
+            movieId={recentWatchedMovieId}
+          />
+
         )}
 
         <LazyMovieRow
@@ -74,7 +84,7 @@ export default function CinematicHome() {
 
       </div>
 
-    </>
+    </div>
 
   )
 

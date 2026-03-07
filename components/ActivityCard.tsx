@@ -16,47 +16,53 @@ interface Activity {
 
 export default function ActivityCard({ activity }: { activity: Activity }) {
 
+  const avatar =
+    activity.userAvatar ||
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${activity.username || "user"}`
+
   const poster = activity.poster
     ? `https://image.tmdb.org/t/p/w500${activity.poster}`
     : "/poster-placeholder.png"
 
   function getText() {
 
-    if (activity.type === "watched") {
-      return "watched"
-    }
+    switch (activity.type) {
 
-    if (activity.type === "rated") {
-      return "rated"
-    }
+      case "watched":
+        return "watched"
 
-    if (activity.type === "reviewed") {
-      return "reviewed"
-    }
+      case "rated":
+        return "rated"
 
-    if (activity.type === "watchlist_add") {
-      return "added to watchlist"
-    }
+      case "reviewed":
+        return "reviewed"
 
-    return activity.type
+      case "watchlist_add":
+        return "added to watchlist"
+
+      default:
+        return activity.type
+    }
   }
 
   return (
-<div className="flex gap-4 p-5 border-b border-white/10 hover:bg-white/5 transition">
+
+    <div className="flex gap-4 p-5 border-b border-white/10 hover:bg-white/5 transition rounded-lg">
+
       {/* Avatar */}
 
       <img
-        src={activity.userAvatar || "/avatar.png"}
-        className="w-10 h-10 rounded-full"
+        src={avatar}
+        className="w-10 h-10 rounded-full bg-zinc-800"
       />
 
       <div className="flex-1">
 
-        {/* Activity Text */}
+        {/* Activity text */}
 
-        <p className="text-sm text-gray-200">
+        <p className="text-sm text-gray-200 leading-relaxed">
 
-          <span className="font-semibold">
+          <span className="font-semibold hover:text-blue-400 cursor-pointer">
             {activity.username || "User"}
           </span>{" "}
 
@@ -80,7 +86,7 @@ export default function ActivityCard({ activity }: { activity: Activity }) {
         {/* Rating */}
 
         {activity.rating && (
-          <p className="text-yellow-400 text-sm">
+          <p className="text-yellow-400 text-sm mt-1">
             ⭐ {activity.rating}/10
           </p>
         )}
@@ -88,19 +94,25 @@ export default function ActivityCard({ activity }: { activity: Activity }) {
         {/* Poster */}
 
         {activity.poster && activity.movieId && (
+
           <Link href={`/movie/${activity.movieId}`}>
+
             <Image
               src={poster}
               alt="poster"
-              width={80}
-              height={120}
-              className="mt-2 rounded hover:scale-105 transition"
+              width={90}
+              height={130}
+              className="mt-3 rounded-lg hover:scale-105 transition"
             />
+
           </Link>
+
         )}
 
       </div>
 
     </div>
+
   )
+
 }

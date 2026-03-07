@@ -4,12 +4,14 @@ import { useEffect, useState } from "react"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/context/AuthContext"
+import Link from "next/link"
 
-const IMAGE_BASE = "https://image.tmdb.org/t/p/w200"
+const IMAGE_BASE = "https://image.tmdb.org/t/p/w300"
 
 export default function DiaryPage() {
 
   const { user } = useAuth()
+
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -36,33 +38,62 @@ export default function DiaryPage() {
         setEntries(data)
 
       } catch (err) {
+
         console.error("Diary load failed:", err)
+
       }
 
       setLoading(false)
+
     }
 
     loadDiary()
 
   }, [user])
 
+
+  function formatDate(date: any) {
+
+    if (!date?.toDate) return "Unknown date"
+
+    return date
+      .toDate()
+      .toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      })
+
+  }
+
+
   if (loading) {
+
     return (
-      <div className="max-w-4xl mx-auto p-6 text-white">
+
+      <div className="max-w-5xl mx-auto p-10 text-white">
         Loading diary...
       </div>
+
     )
+
   }
+
 
   return (
 
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-10 text-white">
 
-      <h1 className="text-3xl font-bold mb-8 text-white">
-        Movie Diary
+      {/* Header */}
+
+      <h1 className="text-3xl font-bold mb-10">
+        📓 Movie Diary
       </h1>
 
-      <div className="space-y-4">
+
+      {/* Entries */}
+
+      <div className="space-y-6">
 
         {entries.length > 0 ? (
 
@@ -70,63 +101,92 @@ export default function DiaryPage() {
 
             <div
               key={entry.id}
-              className="bg-white/5 border border-white/10 p-4 rounded-xl flex gap-6 items-center hover:bg-white/10 transition"
+              className="bg-white/5 border border-white/10 p-5 rounded-xl flex gap-6 items-center hover:bg-white/10 transition"
             >
 
               {/* Poster */}
 
-              <div className="flex-shrink-0">
+              <Link href={`/movie/${entry.movieId || entry.id}`}>
 
                 {entry.poster_path ? (
 
                   <img
                     src={`${IMAGE_BASE}${entry.poster_path}`}
                     alt={entry.title || "Movie"}
-                    className="w-20 rounded-lg shadow-lg"
+                    className="w-24 rounded-lg shadow-lg hover:scale-105 transition"
                   />
 
                 ) : (
 
-                  <div className="w-20 h-[120px] bg-gray-800 rounded-lg animate-pulse" />
+                  <div className="w-24 h-[140px] bg-gray-800 rounded-lg animate-pulse" />
 
                 )}
 
-              </div>
+              </Link>
+
 
               {/* Info */}
 
               <div className="flex-grow">
 
-                <h3 className="text-xl font-semibold text-white mb-1">
-                  {entry.title || entry.movieTitle || "Untitled Movie"}
-                </h3>
+                <Link href={`/movie/${entry.movieId || entry.id}`}>
 
-                <div className="flex items-center gap-3">
+                  <h3 className="text-xl font-semibold hover:text-blue-400 transition">
 
-                  <p className="text-gray-400 text-sm">
+                    {entry.title || entry.movieTitle || "Untitled Movie"}
 
-                    {entry.watchedAt?.toDate
-                      ? entry.watchedAt.toDate().toDateString()
-                      : "Date unknown"}
+                  </h3>
 
-                  </p>
+                </Link>
+
+
+                <div className="flex items-center gap-4 mt-2">
+
+                  {/* Date */}
+
+                  <span className="text-gray-400 text-sm">
+
+                    📅 {formatDate(entry.watchedAt)}
+
+                  </span>
+
+
+                  {/* Rating */}
 
                   {entry.rating && (
 
-                    <span className="text-yellow-500 text-sm font-medium">
-                      ★ {entry.rating}
+                    <span className="text-yellow-400 text-sm font-medium">
+
+                      ⭐ {entry.rating}/10
+
                     </span>
 
                   )}
 
                 </div>
 
+
+                {/* Optional notes (future feature ready) */}
+
+                {entry.note && (
+
+                  <p className="text-gray-400 text-sm mt-2">
+
+                    {entry.note}
+
+                  </p>
+
+                )}
+
               </div>
 
-              {/* ID */}
 
-              <div className="text-gray-600 text-xs font-mono">
-                ID: {entry.id.slice(0, 8)}
+              {/* Badge */}
+
+              <div className="hidden md:block text-xs text-gray-500">
+
+                Watched
+
               </div>
 
             </div>
@@ -135,10 +195,18 @@ export default function DiaryPage() {
 
         ) : (
 
-          <div className="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
+          <div className="text-center py-24 bg-white/5 rounded-2xl border border-dashed border-white/10">
 
-            <p className="text-gray-500">
-              Your diary is empty. Start logging movies!
+            <div className="text-5xl mb-4">
+              🎬
+            </div>
+
+            <p className="text-gray-400">
+              Your diary is empty
+            </p>
+
+            <p className="text-gray-500 text-sm mt-2">
+              Start watching movies to fill your diary
             </p>
 
           </div>
@@ -150,4 +218,5 @@ export default function DiaryPage() {
     </div>
 
   )
+
 }

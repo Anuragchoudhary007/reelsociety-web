@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import {
-  collection,
   collectionGroup,
   query,
   orderBy,
@@ -18,6 +17,7 @@ export default function CommunityPage() {
 
   const [activities, setActivities] = useState<any[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   /* ================= ACTIVITY FEED ================= */
 
@@ -38,6 +38,7 @@ export default function CommunityPage() {
       }))
 
       setActivities(data)
+      setLoading(false)
     }
 
     fetchActivities()
@@ -101,7 +102,7 @@ export default function CommunityPage() {
 
   return (
 
-    <div className="p-10 flex gap-10">
+    <div className="p-10 flex gap-12">
 
       {/* ACTIVITY FEED */}
 
@@ -111,14 +112,27 @@ export default function CommunityPage() {
           📊 Activity Feed
         </h2>
 
+        {loading && (
+          <p className="text-gray-400">Loading activity...</p>
+        )}
+
+        {!loading && activities.length === 0 && (
+          <p className="text-gray-400">
+            No activity yet.
+          </p>
+        )}
+
         {activities.map((activity) => (
+
           <ActivityCard
             key={activity.id}
             activity={activity}
           />
+
         ))}
 
       </div>
+
 
       {/* LEADERBOARD */}
 
@@ -128,39 +142,49 @@ export default function CommunityPage() {
           🏆 Leaderboard
         </h2>
 
-        {leaderboard.map((user, index) => (
+        {leaderboard.map((user, index) => {
 
-          <div
-            key={user.uid}
-            className="bg-white/5 border border-white/10 p-4 rounded-xl mb-4 flex items-center gap-4"
-          >
+          const avatar =
+            user.photoURL ||
+            `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`
 
-            <span className="text-yellow-400 font-bold">
-              #{index + 1}
-            </span>
+          return (
 
-            <img
-              src={user.photoURL || "/avatar.png"}
-              className="w-8 h-8 rounded-full"
-            />
+            <div
+              key={user.uid}
+              className="bg-white/5 border border-white/10 p-4 rounded-xl mb-4 flex items-center gap-4 hover:bg-white/10 transition"
+            >
 
-            <div>
+              <span className="text-yellow-400 font-bold text-lg">
+                #{index + 1}
+              </span>
 
-              <div>{user.username || "User"}</div>
+              <img
+                src={avatar}
+                className="w-9 h-9 rounded-full bg-zinc-800"
+              />
 
-              <div className="text-sm text-yellow-400">
-                {getBadge(user.watchedCount)}
+              <div>
+
+                <div className="font-semibold">
+                  {user.username || "User"}
+                </div>
+
+                <div className="text-sm text-yellow-400">
+                  {getBadge(user.watchedCount)}
+                </div>
+
+              </div>
+
+              <div className="ml-auto font-bold">
+                {user.watchedCount}
               </div>
 
             </div>
 
-            <div className="ml-auto font-bold">
-              {user.watchedCount}
-            </div>
+          )
 
-          </div>
-
-        ))}
+        })}
 
       </div>
 

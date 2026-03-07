@@ -17,7 +17,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function FriendsPage() {
-
   const { user } = useAuth();
 
   const [search, setSearch] = useState("");
@@ -26,206 +25,172 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState<any[]>([]);
 
   useEffect(() => {
-
     if (!user?.uid) return;
 
     async function load() {
-
       const req = await getFriendRequests(user.uid);
       const fr = await getFriends(user.uid);
 
       setRequests(req);
       setFriends(fr);
-
     }
 
     load();
-
   }, [user?.uid]);
 
-
   async function handleSearch() {
-
     if (!search) return;
-
     const users = await searchUsers(search);
     setResults(users);
-
   }
 
-
   return (
+    <div className="max-w-5xl mx-auto text-white px-4 py-8">
 
-    <div className="max-w-5xl mx-auto text-white px-4">
+      <h1 className="text-3xl font-bold mb-10">Friends</h1>
 
-      <h1 className="text-3xl font-bold mb-10">
-        Friends
-      </h1>
-
-
-      {/* SEARCH */}
+      {/* Add Friends */}
 
       <div className="mb-12 bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
 
-        <h2 className="text-lg font-semibold mb-4">
-          Add Friends
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">Add Friends</h2>
 
         <div className="flex gap-3 mb-6">
 
           <input
             value={search}
-            onChange={(e)=>setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users..."
-            className="bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg w-80 outline-none"
+            className="bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg w-80 outline-none focus:border-blue-500"
           />
 
           <button
             onClick={handleSearch}
-            className="bg-blue-600 px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="bg-blue-600 px-5 py-2 rounded-lg hover:bg-blue-700"
           >
             Search
           </button>
 
         </div>
 
+        {results.map((u) => {
 
-        {results.map((u)=>(
-          <div
-            key={u.id}
-            className="flex items-center justify-between bg-zinc-800 px-4 py-3 rounded-lg mb-3 hover:bg-zinc-700 transition"
-          >
+          const avatar =
+            u.photoURL ||
+            `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`;
 
-            <div className="flex items-center gap-3">
+          return (
 
-              <img
-                src={u.photoURL || "/avatar.png"}
-                className="w-8 h-8 rounded-full"
-              />
+            <div
+              key={u.id}
+              className="flex items-center justify-between bg-zinc-800 px-4 py-3 rounded-lg mb-3 hover:bg-zinc-700"
+            >
 
-              <span>{u.username}</span>
+              <div className="flex items-center gap-3">
+
+                <img
+                  src={avatar}
+                  className="w-10 h-10 rounded-full bg-zinc-700"
+                />
+
+                <span className="font-medium">{u.username}</span>
+
+              </div>
+
+              <button
+                onClick={() => sendFriendRequest(user!.uid, u.id)}
+                className="bg-blue-600 px-4 py-1.5 rounded-lg hover:bg-blue-700 text-sm"
+              >
+                Add
+              </button>
 
             </div>
+          );
+        })}
 
-            <button
-              onClick={()=>sendFriendRequest(user!.uid,u.id)}
-              className="bg-green-600 px-3 py-1 rounded hover:bg-green-700 transition"
-            >
-              Add
-            </button>
+      </div>
 
-          </div>
+      {/* Requests */}
+
+      <div className="mb-12">
+
+        <h2 className="text-lg font-semibold mb-4">Friend Requests</h2>
+
+        {requests.length === 0 && (
+          <p className="text-zinc-500 italic">No pending requests</p>
+        )}
+
+        {requests.map((r) => (
+          <FriendRequestCard key={r.id} request={r} />
         ))}
 
       </div>
 
-
-      {/* FRIEND REQUESTS */}
-
-      <div className="mb-12">
-
-        <h2 className="text-lg font-semibold mb-4">
-          Friend Requests
-        </h2>
-
-        <div className="space-y-3">
-
-          {requests.length === 0 && (
-            <p className="text-zinc-500">
-              No friend requests
-            </p>
-          )}
-
-          {requests.map((r)=>(
-            <FriendRequestCard key={r.id} request={r} />
-          ))}
-
-        </div>
-
-      </div>
-
-
-      {/* FRIEND LIST */}
+      {/* Friends */}
 
       <div>
 
-        <h2 className="text-lg font-semibold mb-4">
-          My Friends
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">My Friends</h2>
 
-        <div className="space-y-3">
+        {friends.length === 0 && (
+          <p className="text-zinc-500 italic">You don't have friends yet.</p>
+        )}
 
-          {friends.length === 0 && (
-            <p className="text-zinc-500">
-              You don't have friends yet.
-            </p>
-          )}
-
-          {friends.map((f)=>(
-            <FriendCard key={f.friendId + "_friend"} friend={f} user={user} />
-          ))}
-
-        </div>
+        {friends.map((f) => (
+          <FriendCard key={f.friendId} friend={f} user={user} />
+        ))}
 
       </div>
 
     </div>
-
   );
-
 }
 
+function FriendRequestCard({ request }: any) {
 
+  const [profile, setProfile] = useState<any>(null);
 
-function FriendRequestCard({request}:any){
+  useEffect(() => {
 
-  const [profile,setProfile] = useState<any>(null)
+    async function load() {
 
-  useEffect(()=>{
+      const snap = await getDoc(doc(db, "users", request.from));
 
-    async function load(){
-
-      const snap = await getDoc(
-        doc(db,"users",request.from)
-      )
-
-      if(snap.exists()){
-        setProfile(snap.data())
-      }
-
+      if (snap.exists()) setProfile(snap.data());
     }
 
-    load()
+    load();
 
-  },[])
+  }, [request.from]);
 
-  return(
+  const avatar =
+    profile?.photoURL ||
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${profile?.username}`;
 
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl hover:border-zinc-600 transition">
+  return (
+
+    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl">
 
       <div className="flex items-center gap-3">
 
-        <img
-          src={profile?.photoURL || "/avatar.png"}
-          className="w-9 h-9 rounded-full"
-        />
+        <img src={avatar} className="w-10 h-10 rounded-full bg-zinc-700" />
 
-        <span>{profile?.username || request.from}</span>
+        <span>{profile?.username}</span>
 
       </div>
 
       <div className="flex gap-3">
 
         <button
-          onClick={()=>acceptFriendRequest(request.id,request.from,request.to)}
-          className="bg-green-600 px-3 py-1 rounded hover:bg-green-700 transition"
+          onClick={() => acceptFriendRequest(request.id, request.from, request.to)}
+          className="bg-green-600 px-4 py-1.5 rounded-lg hover:bg-green-700 text-sm"
         >
           Accept
         </button>
 
         <button
-          onClick={()=>rejectFriendRequest(request.id)}
-          className="bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition"
+          onClick={() => rejectFriendRequest(request.id)}
+          className="bg-zinc-700 px-4 py-1.5 rounded-lg hover:bg-red-600 text-sm"
         >
           Reject
         </button>
@@ -233,50 +198,42 @@ function FriendRequestCard({request}:any){
       </div>
 
     </div>
-
-  )
-
+  );
 }
 
+function FriendCard({ friend, user }: any) {
 
+  const [profile, setProfile] = useState<any>(null);
 
-function FriendCard({friend,user}:any){
+  useEffect(() => {
 
-  const [profile,setProfile] = useState<any>(null)
+    async function load() {
 
-  useEffect(()=>{
+      const snap = await getDoc(doc(db, "users", friend.friendId));
 
-    async function load(){
-
-      const snap = await getDoc(
-        doc(db,"users",friend.friendId)
-      )
-
-      if(snap.exists()){
-        setProfile(snap.data())
-      }
-
+      if (snap.exists()) setProfile(snap.data());
     }
 
-    load()
+    load();
 
-  },[])
+  }, [friend.friendId]);
 
-  return(
+  const avatar =
+    profile?.photoURL ||
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${profile?.username}`;
 
-    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl hover:border-zinc-600 transition">
+  return (
+
+    <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl hover:border-zinc-700">
 
       <Link href={`/user/${friend.friendId}`}>
 
         <div className="flex items-center gap-3 cursor-pointer">
 
-          <img
-            src={profile?.photoURL || "/avatar.png"}
-            className="w-9 h-9 rounded-full"
-          />
+          <img src={avatar} className="w-10 h-10 rounded-full bg-zinc-700" />
 
-          <span className="text-blue-400 hover:underline">
-            {profile?.username || friend.friendId}
+          <span className="font-medium hover:text-blue-400">
+            {profile?.username}
           </span>
 
         </div>
@@ -284,14 +241,13 @@ function FriendCard({friend,user}:any){
       </Link>
 
       <button
-        onClick={()=>removeFriend(user.uid,friend.friendId)}
-        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition"
+        onClick={() => removeFriend(user.uid, friend.friendId)}
+        className="text-zinc-500 hover:text-red-500"
       >
         Remove
       </button>
 
     </div>
 
-  )
-
+  );
 }
