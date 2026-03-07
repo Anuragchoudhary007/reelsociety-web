@@ -17,7 +17,7 @@ export default function CinematicHome() {
 
       <HeroBanner />
 
-      <div className="space-y-16 px-10 py-8">
+      <div className="space-y-16 px-4 md:px-10 py-8">
 
         {recentWatchedMovieId && (
           <RecommendationRow movieId={recentWatchedMovieId} />

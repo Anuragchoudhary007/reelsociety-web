@@ -42,8 +42,7 @@ export default function ActivityCard({ activity }: { activity: Activity }) {
   }
 
   return (
-    <div className="flex gap-4 p-4 border-b border-white/10 hover:bg-white/5 transition">
-
+<div className="flex gap-4 p-5 border-b border-white/10 hover:bg-white/5 transition">
       {/* Avatar */}
 
       <img

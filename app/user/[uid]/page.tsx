@@ -1,198 +1,109 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs
-} from "firebase/firestore";
-import Link from "next/link";
-
-const IMAGE = "https://image.tmdb.org/t/p/w500";
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+import { db } from "@/lib/firebase"
+import { doc, getDoc, collection, getDocs } from "firebase/firestore"
+import Link from "next/link"
 
 export default function UserProfilePage() {
+  const params = useParams()
+  const uid = params.uid as string
 
-  const params = useParams();
-  const uid = params.uid as string;
-
-  const [profile, setProfile] = useState<any>(null);
-  const [lists, setLists] = useState<any[]>([]);
-  const [watchlistCount, setWatchlistCount] = useState(0);
+  const [profile, setProfile] = useState<any>(null)
+  const [lists, setLists] = useState<any[]>([])
+  const [watched, setWatched] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!uid) return
 
-    async function loadProfile() {
+    async function load() {
+      try {
+        const userSnap = await getDoc(doc(db, "users", uid))
+        if (userSnap.exists()) {
+          setProfile(userSnap.data())
+        }
 
-      const userRef = doc(db, "users", uid);
-      const userSnap = await getDoc(userRef);
+        const watchSnap = await getDocs(collection(db, "users", uid, "watched"))
+        setWatched(watchSnap.size)
 
-      if (userSnap.exists()) {
-        setProfile(userSnap.data());
+        const listSnap = await getDocs(collection(db, "users", uid, "lists"))
+        setLists(listSnap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        })))
+      } catch (error) {
+        console.error("Error loading profile:", error)
+      } finally {
+        setLoading(false)
       }
-
-      /* FETCH LISTS */
-
-      const listsRef = collection(db, "users", uid, "lists");
-      const listsSnap = await getDocs(listsRef);
-
-      const publicLists = await Promise.all(
-        listsSnap.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter((l: any) => l.isPublic !== false)
-          .map(async (list: any) => {
-
-            const itemsSnap = await getDocs(
-              collection(db, "users", uid, "lists", list.id, "items")
-            );
-
-            const preview = itemsSnap.docs
-              .slice(0, 1)
-              .map(d => d.data());
-
-            return {
-              ...list,
-              preview,
-              count: itemsSnap.size
-            };
-
-          })
-      );
-
-      setLists(publicLists);
-
-      /* WATCHLIST COUNT */
-
-      const watchRef = collection(db, "users", uid, "watchlist");
-      const watchSnap = await getDocs(watchRef);
-
-      setWatchlistCount(watchSnap.size);
-
     }
 
-    loadProfile();
+    load()
+  }, [uid])
 
-  }, [uid]);
-
-  if (!profile) {
-    return <div className="p-10 text-white">Loading profile...</div>;
-  }
+  if (loading) return <div className="p-10 text-gray-500">Loading profile...</div>
+  if (!profile) return <div className="p-10 text-gray-500">User not found.</div>
 
   return (
-
-    <div className="p-10 text-white max-w-4xl">
-
-      {/* PROFILE HEADER */}
-
-      <div className="flex items-center gap-6 mb-8">
-
+    <div className="max-w-5xl mx-auto p-8">
+      <div className="flex flex-col md:flex-row items-center gap-8 mb-12 bg-white/5 p-8 rounded-3xl border border-white/10">
         <img
           src={profile.photoURL || "/avatar.png"}
-          className="w-24 h-24 rounded-full"
+          alt={profile.username}
+          className="w-32 h-32 rounded-full border-4 border-white/10 object-cover"
         />
 
-        <div>
-
-          <h1 className="text-3xl font-bold">
+        <div className="text-center md:text-left flex-grow">
+          <h1 className="text-4xl font-bold text-white mb-2">
             {profile.username}
           </h1>
-
-          <p className="text-gray-400 mt-1">
-            {profile.bio || "No bio yet"}
+          <p className="text-gray-400 max-w-md">
+            {profile.bio || "No bio yet."}
           </p>
-
         </div>
 
+        <div className="flex gap-8 border-l border-white/10 pl-8">
+          <div className="text-center">
+            <p className="text-3xl font-bold text-white">{watched}</p>
+            <p className="text-gray-500 text-xs uppercase tracking-widest">Watched</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl font-bold text-white">{lists.length}</p>
+            <p className="text-gray-500 text-xs uppercase tracking-widest">Lists</p>
+          </div>
+        </div>
       </div>
 
-      {/* STATS */}
-
-      <div className="flex gap-8 mb-10">
-
-        <div>
-          <p className="text-lg font-semibold">
-            {watchlistCount}
-          </p>
-          <p className="text-gray-400 text-sm">
-            Watchlist
-          </p>
-        </div>
-
-        <div>
-          <p className="text-lg font-semibold">
-            {lists.length}
-          </p>
-          <p className="text-gray-400 text-sm">
-            Public Lists
-          </p>
-        </div>
-
-      </div>
-
-      {/* PUBLIC LISTS */}
-
-      <div>
-
-        <h2 className="text-2xl mb-6">
+      <section>
+        <h2 className="text-xl font-semibold mb-6 text-white flex items-center gap-2">
           Public Lists
         </h2>
 
-        {lists.length === 0 && (
-          <p className="text-gray-500">
-            No public lists yet
-          </p>
+        {lists.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lists.map((list) => (
+              <Link
+                key={list.id}
+                href={`/lists/${list.id}`}
+                className="group bg-white/5 border border-white/10 p-5 rounded-2xl hover:border-white/30 transition duration-300"
+              >
+                <h3 className="text-lg font-semibold text-gray-200 group-hover:text-white transition">
+                  {list.name}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {list.count || 0} items
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 text-gray-500">
+            No public lists created yet.
+          </div>
         )}
-
-        {lists.map((list: any) => {
-
-          const poster = list.preview?.[0]?.poster_path;
-
-          return (
-
-            <Link
-              key={list.id}
-             href={`/lists/${list.id}`}
-            >
-
-              <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-4 hover:bg-white/10 transition">
-
-                <div className="w-28 h-40 bg-gray-900">
-
-                  {poster && (
-                    <img
-                      src={`${IMAGE}${poster}`}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-
-                </div>
-
-                <div className="p-4 flex flex-col justify-center">
-
-                  <h3 className="text-lg font-semibold">
-                    {list.name}
-                  </h3>
-
-                  <p className="text-gray-400 text-sm">
-                    {list.count} movies
-                  </p>
-
-                </div>
-
-              </div>
-
-            </Link>
-
-          );
-
-        })}
-
-      </div>
-
+      </section>
     </div>
-
-  );
-
+  )
 }

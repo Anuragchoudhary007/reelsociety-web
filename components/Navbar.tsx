@@ -23,11 +23,11 @@ export default function Navbar() {
         placeholder="Search movies..."
         className="w-[420px] px-4 py-2 bg-black border border-white/20 rounded-lg"
       />
-
+className="hover:bg-white/5 transition flex items-center gap-3 p-3"
       <div className="flex items-center gap-4">
 
         <Link href="/profile">
-          <button className="px-4 py-2 border border-white/30 rounded-lg">
+          <button className="hover:bg-white/5 transition flex items-center gap-3 p-3">
             Profile
           </button>
         </Link>
@@ -35,7 +35,7 @@ export default function Navbar() {
         {user && (
           <button
             onClick={() => signOut(auth)}
-            className="px-4 py-2 border border-white/30 rounded-lg"
+            className="hover:bg-white/5 transition flex items-center gap-3 p-3"
           >
             Logout
           </button>

@@ -58,8 +58,7 @@ export default function FriendsTrending() {
         👥 Trending Among Friends
       </h2>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-
+<div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide px-2 sm:px-0">
       {movies.map((movie, index) => (
   <MovieCard key={movie.id + "-" + index} movie={movie} />
 ))}
