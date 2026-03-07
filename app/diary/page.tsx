@@ -19,12 +19,14 @@ useEffect(() => {
 
   if (!user) return
 
+  const uid = user.uid
+
   async function loadDiary() {
 
     try {
 
       const q = query(
-        collection(db, "users", user!.uid, "watched"),
+        collection(db, "users", uid, "watched"),
         orderBy("watchedAt", "desc")
       )
 
