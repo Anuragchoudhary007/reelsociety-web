@@ -22,22 +22,22 @@ export default function ProfilePage() {
 
     async function loadProfile() {
 
-      const profileSnap = await getDoc(doc(db, "users", user.uid));
+      const profileSnap = await getDoc(doc(db, "users", user!.uid));
 
       if (profileSnap.exists()) {
         setProfile(profileSnap.data());
       }
 
       const watchedSnap = await getDocs(
-        collection(db, "users", user.uid, "watched")
+        collection(db, "users", user!.uid, "watched")
       );
 
       const watchlistSnap = await getDocs(
-        collection(db, "users", user.uid, "watchlist")
+        collection(db, "users", user!.uid, "watchlist")
       );
 
       const listsSnap = await getDocs(
-        collection(db, "users", user.uid, "lists")
+        collection(db, "users", user!.uid, "lists")
       );
 
       setWatched(watchedSnap.docs.map((d) => d.data()));

@@ -24,7 +24,7 @@ export default function DiaryPage() {
       try {
 
         const q = query(
-          collection(db, "users", user.uid, "watched"),
+          collection(db, "users", user!.uid, "watched"),
           orderBy("watchedAt", "desc")
         )
 
