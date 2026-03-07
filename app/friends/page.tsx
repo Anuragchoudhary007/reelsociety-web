@@ -24,19 +24,25 @@ export default function FriendsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (!user?.uid) return;
+useEffect(() => {
 
-    async function load() {
-      const req = await getFriendRequests(user.uid);
-      const fr = await getFriends(user.uid);
+  if (!user) return
 
-      setRequests(req);
-      setFriends(fr);
-    }
+  const uid = user.uid
 
-    load();
-  }, [user?.uid]);
+  async function load() {
+
+    const req = await getFriendRequests(uid)
+    const fr = await getFriends(uid)
+
+    setRequests(req)
+    setFriends(fr)
+
+  }
+
+  load()
+
+}, [user])
 
   async function handleSearch() {
     if (!search) return;
