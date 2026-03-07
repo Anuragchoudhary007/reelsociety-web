@@ -15,41 +15,39 @@ export default function DiaryPage() {
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (!user) return
+  if (!user) return
 
-    async function loadDiary() {
+  async function loadDiary() {
 
-      try {
+    try {
 
-        const q = query(
-          collection(db, "users", user!.uid, "watched"),
-          orderBy("watchedAt", "desc")
-        )
+      const q = query(
+        collection(db, "users", user!.uid, "watched"),
+        orderBy("watchedAt", "desc")
+      )
 
-        const snap = await getDocs(q)
+      const snap = await getDocs(q)
 
-        const data = snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
+      const data = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
 
-        setEntries(data)
+      setEntries(data)
 
-      } catch (err) {
-
-        console.error("Diary load failed:", err)
-
-      }
-
-      setLoading(false)
-
+    } catch (err) {
+      console.error("Diary load failed:", err)
     }
 
-    loadDiary()
+    setLoading(false)
 
-  }, [user])
+  }
+
+  loadDiary()
+
+}, [user])
 
 
   function formatDate(date: any) {
