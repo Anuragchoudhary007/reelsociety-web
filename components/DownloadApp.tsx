@@ -19,9 +19,11 @@ export default function DownloadApp() {
             Install the Android app for the full experience.
           </p>
 
-          <button className="bg-white text-black px-8 py-3 rounded-xl font-semibold hover:bg-gray-200 hover:scale-105 transition shadow-lg">
-            Download APK
-          </button>
+          <a href="/ReelSociety.apk" download>
+            <button className="bg-white text-black px-8 py-3 rounded-xl font-semibold hover:bg-gray-200 hover:scale-105 transition shadow-lg">
+              Download APK
+            </button>
+          </a>
 
           <div className="mt-14 border-t border-white/10 pt-10">
             <p className="text-sm text-gray-500 mb-8 uppercase tracking-widest font-medium">
